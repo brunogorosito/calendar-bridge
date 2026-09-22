@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   Clock,
   ExternalLink,
   MapPin,
+  Trash2,
   Video,
   X,
 } from "lucide-react";
 import { api } from "../lib/api.js";
+import { EventFormModal } from "./EventFormModal.jsx";
 import {
   TZ,
   fmtTime,
@@ -37,8 +40,17 @@ export function CalendarView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [showNew, setShowNew] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const anchorISO = toISO(anchor);
+
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  useEffect(() => {
+    api.accounts().then(setAccounts).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +77,7 @@ export function CalendarView() {
     return () => {
       cancelled = true;
     };
-  }, [view, anchorISO]);
+  }, [view, anchorISO, reloadKey]);
 
   const navigate = useCallback(
     (dir) => {
@@ -129,6 +141,15 @@ export function CalendarView() {
           >
             Hoy
           </button>
+          <button
+            onClick={() => setShowNew(true)}
+            disabled={!accounts.some((a) => a.provider !== "microsoft_ics")}
+            title="Nueva reunión"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-40"
+          >
+            <CalendarPlus size={15} />
+            <span className="hidden sm:inline">Nueva</span>
+          </button>
         </div>
       </div>
 
@@ -162,7 +183,26 @@ export function CalendarView() {
         )
       )}
 
-      {selected && <EventModal block={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EventModal
+          block={selected}
+          onClose={() => setSelected(null)}
+          onDeleted={reload}
+          writable={selected.writable}
+        />
+      )}
+
+      {showNew && (
+        <EventFormModal
+          initialStart={anchorISO}
+          accounts={accounts}
+          onClose={() => setShowNew(false)}
+          onSaved={() => {
+            setShowNew(false);
+            reload();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -437,13 +477,29 @@ function LoadBar({ busy, free }) {
   );
 }
 
-function EventModal({ block, onClose }) {
+function EventModal({ block, onClose, onDeleted, writable = false }) {
   const c = providerColor(block.source, block.client_name);
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  async function remove() {
+    if (!block.event_id) return;
+    if (!window.confirm(`¿Eliminar "${block.summary || "esta reunión"}"?`)) return;
+    setDeleting(true);
+    try {
+      await api.deleteEvent(block.event_id);
+      onDeleted();
+      onClose();
+    } catch (e) {
+      window.alert(e.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 sm:p-6" onClick={onClose}>
@@ -457,9 +513,21 @@ function EventModal({ block, onClose }) {
             <span className={`w-2 h-2 rounded-full ${c.solid}`} />
             <span className={`text-[11px] font-medium uppercase tracking-wide ${c.text}`}>{providerLabel(block.source, block.client_name)}</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-slate-800 transition">
-            <X size={17} className="text-slate-500" />
-          </button>
+          <div className="flex items-center gap-1">
+            {writable && block.event_id && (
+              <button
+                onClick={remove}
+                disabled={deleting}
+                title="Eliminar"
+                className="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-red-400 transition disabled:opacity-50"
+              >
+                {deleting ? <Clock size={15} className="animate-spin" /> : <Trash2 size={15} />}
+              </button>
+            )}
+            <button onClick={onClose} className="p-1.5 rounded-md hover:bg-slate-800 transition">
+              <X size={17} className="text-slate-500" />
+            </button>
+          </div>
         </div>
 
         <h2 className="text-lg font-semibold mb-1 text-slate-100">{block.summary || "Sin título"}</h2>

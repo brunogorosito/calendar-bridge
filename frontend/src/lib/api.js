@@ -15,6 +15,15 @@ export const api = {
   googleClients: () => req("/auth/google/clients"),
   login: (provider, client) => req(`/auth/${provider}/login${client ? `?client=${client}` : ""}`),
   removeAccount: (id) => req(`/auth/accounts/${id}`, { method: "DELETE" }),
+  createEvent: (body) =>
+    req("/calendar/events", { method: "POST", body: JSON.stringify(body) }),
+  updateEvent: (id, body) =>
+    req(`/calendar/events/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteEvent: (id) => req(`/calendar/events/${id}`, { method: "DELETE" }),
+  suggestSlots: (start, end, duration, max = 10) =>
+    req(`/suggest/slots?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&duration=${duration}&max_results=${max}`),
+  stats: (start, end) =>
+    req(`/stats?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
   refresh: () => req("/auth/refresh", { method: "POST" }),
   syncIcs: () => req("/auth/sync/ics", { method: "POST" }),
   events: (start, end, provider) =>

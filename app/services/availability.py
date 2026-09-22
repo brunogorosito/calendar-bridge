@@ -80,6 +80,9 @@ async def get_day_view(
                 online_meeting_url=ev.online_meeting_url,
                 account_email=email,
                 client_name=client_name,
+                event_id=ev.id,
+                user_id=ev.user_id,
+                writable=ev.provider != "microsoft_ics",
             )
         )
     # almuerzo como bloque propio (solo días laborables)
