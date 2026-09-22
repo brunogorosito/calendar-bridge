@@ -94,7 +94,7 @@ export function CalendarView() {
     const days = data.type === "month" ? data.weeks.flat() : data.days;
     const busy = days.reduce((a, d) => a + (d.busy_minutes || 0), 0);
     const free = days.reduce((a, d) => a + (d.free_minutes || 0), 0);
-    const ev = days.reduce((a, d) => a + d.blocks.filter((b) => b.busy).length, 0);
+    const ev = days.reduce((a, d) => a + d.blocks.filter((b) => b.busy && b.source !== "lunch").length, 0);
     return { busy, free, events: ev };
   }, [data]);
 
@@ -186,6 +186,16 @@ function DayView({ day, onSelect }) {
   const hours = [];
   for (let h = ws; h < we; h++) hours.push(h);
 
+  if (!day.is_workday) {
+    return (
+      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-slate-500">
+        <div className="text-3xl mb-2">🏖️</div>
+        <div className="font-semibold capitalize text-slate-300">{fmtRelativeDay(day.date)}</div>
+        <div className="text-sm mt-1">Día no laboral</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 flex items-center justify-between">
@@ -238,11 +248,12 @@ function WeekView({ days, onSelect }) {
       <div className="grid grid-cols-7 gap-2">
         {days.map((d) => {
           const isToday = d.date === todayISO();
+          const isWeekend = d.is_workday === false;
           return (
             <div
               key={d.date}
               className={`rounded-2xl border p-3 ${
-                isToday ? "border-blue-500/40 bg-blue-500/5" : "border-white/5 bg-slate-900/40"
+                isToday ? "border-blue-500/40 bg-blue-500/5" : isWeekend ? "border-white/5 bg-slate-900/20 opacity-60" : "border-white/5 bg-slate-900/40"
               }`}
             >
               <div className="text-center mb-2">
@@ -251,28 +262,36 @@ function WeekView({ days, onSelect }) {
                 </div>
                 <div className={`text-xl font-bold ${isToday ? "text-blue-300" : ""}`}>{parseInt(d.date.slice(8, 10), 10)}</div>
               </div>
-              <div className="space-y-1">
-                {d.blocks
-                  .filter((b) => b.busy)
-                  .slice(0, 6)
-                  .map((b, i) => (
-                    <button
-                      key={i}
-                      onClick={() => onSelect(b)}
-                      className="w-full text-left rounded-lg px-2 py-1 text-[10px] leading-tight border transition hover:opacity-80"
-                      style={{ borderColor: "rgba(148,163,184,.2)", background: "rgba(59,130,246,.12)" }}
-                    >
-                      <div className="font-medium text-blue-200">
-                        {fmtTime(b.start)} {b.summary}
-                      </div>
-                    </button>
-                  ))}
-                {d.blocks.filter((b) => b.busy).length > 6 && (
-                  <div className="text-[10px] text-slate-500 px-1">
-                    +{d.blocks.filter((b) => b.busy).length - 6} más
-                  </div>
-                )}
-              </div>
+              {isWeekend ? (
+                <div className="text-[10px] text-slate-600 text-center pt-3">no laboral</div>
+              ) : (
+                <div className="space-y-1">
+                  {d.blocks
+                    .filter((b) => b.busy)
+                    .slice(0, 6)
+                    .map((b, i) => {
+                      const isLunch = b.source === "lunch";
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => onSelect(b)}
+                          className={`w-full text-left rounded-lg px-2 py-1 text-[10px] leading-tight border transition hover:opacity-80 ${
+                            isLunch ? "border-amber-500/20 bg-amber-500/10" : "border-white/5 bg-blue-500/10"
+                          }`}
+                        >
+                          <div className={`font-medium ${isLunch ? "text-amber-200" : "text-blue-200"}`}>
+                            {fmtTime(b.start)} {b.summary}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  {d.blocks.filter((b) => b.busy).length > 6 && (
+                    <div className="text-[10px] text-slate-500 px-1">
+                      +{d.blocks.filter((b) => b.busy).length - 6} más
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -285,7 +304,7 @@ function WeekView({ days, onSelect }) {
         </h3>
         <div className="space-y-1.5">
           {days
-            .flatMap((d) => d.blocks.filter((b) => b.busy).map((b) => ({ ...b, date: d.date })))
+            .flatMap((d) => d.blocks.filter((b) => b.busy && b.source !== "lunch").map((b) => ({ ...b, date: d.date })))
             .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
             .map((b, i) => (
               <button
@@ -301,7 +320,7 @@ function WeekView({ days, onSelect }) {
                 <span className="ml-auto text-[10px] text-slate-500 shrink-0">{providerLabel(b.source)}</span>
               </button>
             ))}
-          {days.every((d) => !d.blocks.some((b) => b.busy)) && (
+          {days.every((d) => !d.blocks.some((b) => b.busy && b.source !== "lunch")) && (
             <div className="text-sm text-slate-500 py-4 text-center">Semana libre 🎉</div>
           )}
         </div>
@@ -324,7 +343,8 @@ function MonthView({ weeks, onSelect }) {
         <div key={i} className="grid grid-cols-7 gap-1.5">
           {week.map((d) => {
             const isToday = d.date === todayISO();
-            const busy = d.blocks.filter((b) => b.busy);
+            const busy = d.blocks.filter((b) => b.busy && b.source !== "lunch");
+            const hasLunch = d.blocks.some((b) => b.source === "lunch");
             const load = d.busy_minutes + d.free_minutes
               ? Math.min(1, d.busy_minutes / (d.busy_minutes + d.free_minutes))
               : 0;
@@ -332,36 +352,48 @@ function MonthView({ weeks, onSelect }) {
               <div
                 key={d.date}
                 className={`rounded-xl border p-1.5 min-h-24 transition hover:border-blue-500/40 ${
-                  isToday ? "border-blue-500/50 bg-blue-500/5" : "border-white/5 bg-slate-900/40"
+                  isToday ? "border-blue-500/50 bg-blue-500/5" : d.is_workday === false ? "border-white/5 bg-slate-900/20 opacity-60" : "border-white/5 bg-slate-900/40"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1 px-0.5">
                   <span className={`text-xs font-semibold ${isToday ? "text-blue-300" : "text-slate-400"}`}>
                     {parseInt(d.date.slice(8, 10), 10)}
                   </span>
-                  {busy.length > 0 && (
-                    <span className="text-[10px] text-slate-500">{fmtMinutes(d.busy_minutes)}</span>
+                  {d.is_workday === false ? (
+                    <span className="text-[9px] text-slate-600">no laboral</span>
+                  ) : (
+                    busy.length + (hasLunch ? 1 : 0) > 0 && (
+                      <span className="text-[10px] text-slate-500">{fmtMinutes(d.busy_minutes)}</span>
+                    )
                   )}
                 </div>
                 <div className="h-0.5 rounded-full bg-slate-800 mb-1.5 overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${Math.max(load * 100, busy.length ? 8 : 0)}%` }} />
                 </div>
-                <div className="space-y-0.5">
-                  {busy.slice(0, 3).map((b, j) => (
-                    <button
-                      key={j}
-                      onClick={() => onSelect(b)}
-                      className="w-full flex items-center gap-1 text-left rounded px-1 py-0.5 text-[10px] hover:opacity-80 transition"
-                      style={{ background: b.source === "google" ? "rgba(59,130,246,.15)" : "rgba(168,85,247,.15)" }}
-                    >
-                      <span className={`text-[8px] font-bold ${providerColor(b.source).text}`}>{providerShort(b.source)}</span>
-                      <span className="truncate text-slate-300">{fmtTime(b.start)} {b.summary}</span>
-                    </button>
-                  ))}
-                  {busy.length > 3 && (
-                    <div className="text-[10px] text-slate-500 px-1">+{busy.length - 3} más</div>
-                  )}
-                </div>
+                {d.is_workday !== false && (
+                  <div className="space-y-0.5">
+                    {hasLunch && (
+                      <div className="flex items-center gap-1 rounded px-1 py-0.5 text-[10px]" style={{ background: "rgba(245,158,11,.15)" }}>
+                        <span className="text-[8px] font-bold text-amber-300">☕</span>
+                        <span className="truncate text-amber-200">Almuerzo</span>
+                      </div>
+                    )}
+                    {busy.slice(0, 2).map((b, j) => (
+                      <button
+                        key={j}
+                        onClick={() => onSelect(b)}
+                        className="w-full flex items-center gap-1 text-left rounded px-1 py-0.5 text-[10px] hover:opacity-80 transition"
+                        style={{ background: b.source === "google" ? "rgba(59,130,246,.15)" : "rgba(168,85,247,.15)" }}
+                      >
+                        <span className={`text-[8px] font-bold ${providerColor(b.source).text}`}>{providerShort(b.source)}</span>
+                        <span className="truncate text-slate-300">{fmtTime(b.start)} {b.summary}</span>
+                      </button>
+                    ))}
+                    {busy.length > 2 && (
+                      <div className="text-[10px] text-slate-500 px-1">+{busy.length - 2} más</div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

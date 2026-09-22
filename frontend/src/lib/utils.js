@@ -90,18 +90,21 @@ export function providerLabel(p) {
   if (p === "google") return "Google";
   if (p === "microsoft") return "Outlook";
   if (p === "microsoft_ics") return "Aunesa";
+  if (p === "lunch") return "Almuerzo";
   return p;
 }
 
 export function providerShort(p) {
   if (p === "google") return "G";
   if (p === "microsoft" || p === "microsoft_ics") return "O";
+  if (p === "lunch") return "☕";
   return "?";
 }
 
 export function providerColor(p) {
   if (p === "google") return { text: "text-blue-300", bg: "bg-blue-500/15", border: "border-blue-500/30", dot: "bg-blue-500", solid: "bg-blue-500" };
   if (p === "microsoft" || p === "microsoft_ics") return { text: "text-purple-300", bg: "bg-purple-500/15", border: "border-purple-500/30", dot: "bg-purple-500", solid: "bg-purple-500" };
+  if (p === "lunch") return { text: "text-amber-300", bg: "bg-amber-500/15", border: "border-amber-500/30", dot: "bg-amber-500", solid: "bg-amber-500" };
   return { text: "text-slate-300", bg: "bg-slate-500/15", border: "border-slate-500/30", dot: "bg-slate-500", solid: "bg-slate-500" };
 }
 

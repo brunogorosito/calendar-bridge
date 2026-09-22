@@ -33,6 +33,13 @@ async def get_day_view(
     day_end = day_start + timedelta(days=1)
     events = await _events_in_range(db, user.id, day_start, day_end)
 
+    is_workday = day.weekday() < 5  # lun-vie
+
+    ws = _parse_time(user.work_start, day)
+    we = _parse_time(user.work_end, day)
+    ls = _parse_time(user.lunch_start or "13:00", day)
+    le = _parse_time(user.lunch_end or "14:00", day)
+
     blocks: list[TimeBlock] = []
     for ev in events:
         s = max(ev.start, day_start)
@@ -51,13 +58,37 @@ async def get_day_view(
                 online_meeting_url=ev.online_meeting_url,
             )
         )
+    # almuerzo como bloque propio (solo días laborables)
+    if is_workday:
+        blocks.append(
+            TimeBlock(
+                start=ls,
+                end=le,
+                busy=True,
+                source="lunch",
+                summary="Almuerzo",
+                description="",
+            )
+        )
     blocks.sort(key=lambda b: b.start)
 
-    ws = _parse_time(user.work_start, day)
-    we = _parse_time(user.work_end, day)
-    total = max(0, int((we - ws).total_seconds() // 60))
+    if not is_workday:
+        return DayView(
+            date=day.date().isoformat(),
+            work_start=user.work_start,
+            work_end=user.work_end,
+            lunch_start=user.lunch_start or "13:00",
+            lunch_end=user.lunch_end or "14:00",
+            is_workday=False,
+            blocks=[],
+            busy_minutes=0,
+            free_minutes=0,
+        )
 
-    # solo contar minutos ocupados dentro de la jornada laboral
+    total = max(0, int((we - ws).total_seconds() // 60))
+    lunch_minutes = max(0, int((le - ls).total_seconds() // 60))
+
+    # solo contar minutos ocupados dentro de la jornada laboral (incluye almuerzo)
     busy_minutes = 0
     for b in blocks:
         if not b.busy:
@@ -67,12 +98,16 @@ async def get_day_view(
         if s < e:
             busy_minutes += int((e - s).total_seconds() // 60)
 
-    free_minutes = max(0, total - busy_minutes)
+    # el tiempo libre se calcula sobre la jornada menos el almuerzo (8h efectivas)
+    free_minutes = max(0, total - lunch_minutes - busy_minutes)
 
     return DayView(
         date=day.date().isoformat(),
         work_start=user.work_start,
         work_end=user.work_end,
+        lunch_start=user.lunch_start or "13:00",
+        lunch_end=user.lunch_end or "14:00",
+        is_workday=True,
         blocks=blocks,
         busy_minutes=busy_minutes,
         free_minutes=free_minutes,

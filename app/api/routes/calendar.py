@@ -32,16 +32,28 @@ async def list_events(
     return [EventOut.model_validate(ev) for ev in result.scalars().all()]
 
 
+def _make_user(tz: str, ws: str, we: str, ls: str, le: str) -> User:
+    return User(
+        timezone=tz,
+        work_start=ws,
+        work_end=we,
+        lunch_start=ls,
+        lunch_end=le,
+    )
+
+
 @router.get("/day/{date}", response_model=DayView)
 async def day_view(
     date: str,
     tz: str = "UTC",
     work_start: str = Query("09:00"),
     work_end: str = Query("18:00"),
+    lunch_start: str = Query("13:00"),
+    lunch_end: str = Query("14:00"),
     db: AsyncSession = Depends(get_db),
 ):
     day = datetime.fromisoformat(date)
-    user = User(timezone=tz, work_start=work_start, work_end=work_end)
+    user = _make_user(tz, work_start, work_end, lunch_start, lunch_end)
     return await get_day_view(db, user, day)
 
 
@@ -51,10 +63,12 @@ async def week_view(
     tz: str = "UTC",
     work_start: str = Query("09:00"),
     work_end: str = Query("18:00"),
+    lunch_start: str = Query("13:00"),
+    lunch_end: str = Query("14:00"),
     db: AsyncSession = Depends(get_db),
 ):
     day = datetime.fromisoformat(date)
-    user = User(timezone=tz, work_start=work_start, work_end=work_end)
+    user = _make_user(tz, work_start, work_end, lunch_start, lunch_end)
     return await get_week_view(db, user, week_start(day))
 
 
@@ -64,8 +78,10 @@ async def month_view(
     tz: str = "UTC",
     work_start: str = Query("09:00"),
     work_end: str = Query("18:00"),
+    lunch_start: str = Query("13:00"),
+    lunch_end: str = Query("14:00"),
     db: AsyncSession = Depends(get_db),
 ):
     day = datetime.fromisoformat(date)
-    user = User(timezone=tz, work_start=work_start, work_end=work_end)
+    user = _make_user(tz, work_start, work_end, lunch_start, lunch_end)
     return await get_month_view(db, user, month_start(day))

@@ -15,6 +15,8 @@ class User(Base):
     timezone: Mapped[str] = mapped_column(String(64), default="UTC")
     work_start: Mapped[str] = mapped_column(String(5), default="09:00")
     work_end: Mapped[str] = mapped_column(String(5), default="18:00")
+    lunch_start: Mapped[str] = mapped_column(String(5), default="13:00")
+    lunch_end: Mapped[str] = mapped_column(String(5), default="14:00")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     accounts: Mapped[list["ProviderAccount"]] = relationship(

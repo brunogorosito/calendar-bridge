@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # Working hours (default per user, override via profile)
     default_work_start: str = "09:00"
     default_work_end: str = "18:00"
+    default_lunch_start: str = "13:00"
+    default_lunch_end: str = "14:00"
     default_timezone: str = "America/Argentina/Buenos_Aires"
 
 

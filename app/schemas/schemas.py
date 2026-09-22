@@ -54,6 +54,9 @@ class DayView(BaseModel):
     date: str  # YYYY-MM-DD
     work_start: str
     work_end: str
+    lunch_start: str = "13:00"
+    lunch_end: str = "14:00"
+    is_workday: bool = True
     blocks: list[TimeBlock]
     busy_minutes: int
     free_minutes: int
