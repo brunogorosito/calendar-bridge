@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...database import get_db
 from ...models import User
 from ...services.suggest import suggest_slots
+from ..deps import require_api_key
 
-router = APIRouter(prefix="/suggest", tags=["suggest"])
+router = APIRouter(prefix="/suggest", tags=["suggest"], dependencies=[Depends(require_api_key)])
 
 
 @router.get("/slots")

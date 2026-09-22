@@ -7,8 +7,9 @@ from ...database import get_db
 from ...models import User
 from ...schemas import EmailOut
 from ...services.inbox import list_unified_inbox
+from ..deps import require_api_key
 
-router = APIRouter(prefix="/inbox", tags=["inbox"])
+router = APIRouter(prefix="/inbox", tags=["inbox"], dependencies=[Depends(require_api_key)])
 
 
 @router.get("", response_model=list[EmailOut])

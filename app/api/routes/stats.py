@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...database import get_db
 from ...models import User
 from ...services.stats import stats
+from ..deps import require_api_key
 
-router = APIRouter(prefix="/stats", tags=["stats"])
+router = APIRouter(prefix="/stats", tags=["stats"], dependencies=[Depends(require_api_key)])
 
 
 @router.get("")

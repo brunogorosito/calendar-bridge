@@ -13,8 +13,13 @@ from ...models import CalendarEvent, User
 from ...schemas import DayView, MonthView, EventOut, WeekView
 from ...services.availability import get_day_view, get_month_view, get_week_view, month_start, week_start
 from ...services import events as events_svc
+from ..deps import require_api_key
 
-router = APIRouter(prefix="/calendar", tags=["calendar"])
+router = APIRouter(
+    prefix="/calendar",
+    tags=["calendar"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 @router.get("/events", response_model=list[EventOut])

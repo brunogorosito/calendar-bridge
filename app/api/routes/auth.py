@@ -14,6 +14,7 @@ from ...models import ProviderAccount, User
 from ...providers import get_provider
 from ...schemas import AccountOut, GoogleClientOut
 from ...services.tokens import save_tokens
+from ..deps import require_api_key
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -100,7 +101,7 @@ async def callback(
     }
 
 
-@router.get("/accounts", response_model=list[AccountOut])
+@router.get("/accounts", response_model=list[AccountOut], dependencies=[Depends(require_api_key)])
 async def list_accounts(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProviderAccount))
     accounts = [AccountOut.model_validate(acc) for acc in result.scalars().all()]
@@ -121,14 +122,14 @@ async def list_accounts(db: AsyncSession = Depends(get_db)):
     return accounts
 
 
-@router.get("/google/clients", response_model=list[GoogleClientOut])
+@router.get("/google/clients", response_model=list[GoogleClientOut], dependencies=[Depends(require_api_key)])
 async def google_clients():
     from ...providers import get_google_client_names
 
     return get_google_client_names()
 
 
-@router.delete("/accounts/{account_id}")
+@router.delete("/accounts/{account_id}", dependencies=[Depends(require_api_key)])
 async def delete_account(account_id: int, db: AsyncSession = Depends(get_db)):
     account = await db.get(ProviderAccount, account_id)
     if account is None:
@@ -138,7 +139,7 @@ async def delete_account(account_id: int, db: AsyncSession = Depends(get_db)):
     return {"deleted": account_id}
 
 
-@router.post("/sync/ics")
+@router.post("/sync/ics", dependencies=[Depends(require_api_key)])
 async def sync_ics(db: AsyncSession = Depends(get_db)):
     """Pull events from the published Outlook ICS calendar (no OAuth needed)."""
     from ...services.sync import sync_ics_calendar
@@ -146,7 +147,7 @@ async def sync_ics(db: AsyncSession = Depends(get_db)):
     return await sync_ics_calendar(db)
 
 
-@router.post("/refresh")
+@router.post("/refresh", dependencies=[Depends(require_api_key)])
 async def force_refresh(db: AsyncSession = Depends(get_db)):
     """Manually trigger a full sync of all linked accounts."""
     from ...services.sync import sync_user

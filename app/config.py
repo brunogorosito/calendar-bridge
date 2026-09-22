@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     secret_key: str = "change-me-in-production"
     access_token_expire_minutes: int = 60
+    # Optional API key for multi-user access. Empty = open (single-user/local).
+    api_keys: str = ""  # comma-separated list of API keys
 
     database_url: str = "postgresql+asyncpg://bridge:bridge@localhost:5432/bridge"
 
