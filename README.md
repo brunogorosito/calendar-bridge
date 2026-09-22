@@ -136,10 +136,15 @@ curl -X POST http://localhost:8000/api/v1/auth/sync/ics
 | POST | `/auth/sync/ics` | Sincroniza calendario Outlook publicado (sin OAuth) |
 | POST | `/auth/refresh` | Fuerza sync manual de todas las cuentas |
 | GET | `/calendar/events?start=&end=` | Eventos unificados en rango |
+| POST | `/calendar/events` | Crear reunión (body: account_id, summary, start, end, ...) |
+| PATCH | `/calendar/events/{id}` | Editar reunión |
+| DELETE | `/calendar/events/{id}` | Eliminar reunión |
 | GET | `/calendar/day/{date}` | Vista de día (bloques ocupado/libre) |
 | GET | `/calendar/week/{date}` | Vista de semana (lunes a domingo) |
 | GET | `/calendar/month/{date}` | Vista de mes (semanas calendario) |
 | GET | `/inbox?unread_only=&search=` | Inbox unificado |
+| GET | `/suggest/slots?start=&end=&duration=` | Sugerencia de horarios libres |
+| GET | `/stats?start=&end=` | Horas de reunión por cuenta/periodo |
 | GET | `/health` | Health check |
 
 Parámetros comunes de las vistas: `tz`, `work_start`, `work_end`.
@@ -185,6 +190,39 @@ DATABASE_URL=postgresql+asyncpg://bridge:bridge@localhost:5434/bridge \
 - [ ] Crear/editar reuniones y generarlas como Teams meeting
 - [ ] Autenticación de usuarios en la API (hoy es single-user)
 - [ ] Frontend web / widgets para Android, iOS, Windows y Linux
+
+## Deploy en producción
+
+```bash
+# 1. En la máquina: copiar el repo y configurar .env
+git clone https://github.com/brunogorosito/calendar-bridge.git
+cd calendar-bridge
+cp .env.example .env
+
+# 2. Configurar credenciales en .env (Google, Microsoft, SMTP si querés notificaciones)
+#    IMPORTANTE: cambiar GOOGLE_REDIRECT_URI / MS_REDIRECT_URI a la URL real,
+#    ej. http://TU_IP:8000/api/v1/auth/google/callback, y registrarla en la consola.
+
+# 3. Levantar (con restart automático)
+docker compose up -d --build
+
+# 4. Ver logs
+docker compose logs -f api
+```
+
+### Recomendaciones de producción
+
+- Configurar `API_KEYS` en `.env` para proteger los endpoints de datos (multi-usuario).
+- Usar un proxy reverso (Caddy/nginx) para HTTPS y exponer solo la API.
+- Los `GOOGLE_REDIRECT_URI` y `MS_REDIRECT_URI` deben apuntar a la URL pública y estar
+  registrados en la consola de Google/Azure.
+- Para notificaciones por email, completar `SMTP_*` y `NOTIFY_EMAILS`.
+
+### Cambiar puertos
+
+```bash
+API_PORT=8080 DB_PORT=5433 docker compose up -d
+```
 
 ## Seguridad
 

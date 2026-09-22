@@ -6,9 +6,10 @@ services:
       POSTGRES_PASSWORD: bridge
       POSTGRES_DB: bridge
     ports:
-      - "5434:5432"
+      - "${DB_PORT:-5434}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bridge"]
       interval: 5s
@@ -21,12 +22,11 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://bridge:bridge@db:5432/bridge
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - .:/srv/app
+    restart: unless-stopped
 
   worker:
     build: .
@@ -37,8 +37,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - .:/srv/app
+    restart: unless-stopped
 
 volumes:
   pgdata:
