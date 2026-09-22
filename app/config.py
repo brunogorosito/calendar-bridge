@@ -1,0 +1,44 @@
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    app_name: str = "Calendar Bridge"
+    environment: str = "development"
+    api_prefix: str = "/api/v1"
+    secret_key: str = "change-me-in-production"
+    access_token_expire_minutes: int = 60
+
+    database_url: str = "postgresql+asyncpg://bridge:bridge@localhost:5432/bridge"
+
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+
+    # Microsoft OAuth
+    ms_client_id: str = ""
+    ms_client_secret: str = ""
+    ms_tenant_id: str = "common"
+    ms_redirect_uri: str = "http://localhost:8000/api/v1/auth/microsoft/callback"
+
+    # Published Outlook ICS calendar (read-only, no OAuth needed)
+    outlook_ics_url: str = ""
+
+    # Sync
+    sync_interval_minutes: int = 15
+    sync_lookback_days: int = 30
+    sync_lookahead_days: int = 60
+
+    # Working hours (default per user, override via profile)
+    default_work_start: str = "09:00"
+    default_work_end: str = "18:00"
+    default_timezone: str = "America/Argentina/Buenos_Aires"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..models import ProviderAccount
+from ..providers import TokenBundle, get_provider
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+async def get_valid_token(db: AsyncSession, account: ProviderAccount) -> str:
+    """Return a valid access token, refreshing and persisting it if expired."""
+    if account.token_expires_at and account.token_expires_at > _utcnow():
+        return account.access_token
+
+    provider = get_provider(account.provider)
+    bundle: TokenBundle = await provider.refresh(account.refresh_token)
+    account.access_token = bundle.access_token
+    account.refresh_token = bundle.refresh_token or account.refresh_token
+    account.token_expires_at = bundle.expires_at
+    account.scopes = bundle.scopes
+    if bundle.email:
+        account.provider_email = bundle.email
+    await db.commit()
+    return account.access_token
+
+
+async def save_tokens(
+    db: AsyncSession, user_id: int, provider: str, bundle: TokenBundle
+) -> ProviderAccount:
+    result = await db.execute(
+        select(ProviderAccount).where(
+            ProviderAccount.user_id == user_id, ProviderAccount.provider == provider
+        )
+    )
+    account = result.scalar_one_or_none()
+    if account is None:
+        account = ProviderAccount(user_id=user_id, provider=provider)
+        db.add(account)
+    account.provider_email = bundle.email
+    account.access_token = bundle.access_token
+    account.refresh_token = bundle.refresh_token or account.refresh_token
+    account.token_expires_at = bundle.expires_at
+    account.scopes = bundle.scopes
+    await db.commit()
+    await db.refresh(account)
+    return account
