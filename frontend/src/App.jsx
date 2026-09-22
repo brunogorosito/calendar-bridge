@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, CheckCircle2, Inbox, Link2, RefreshCw, XCircle } from "lucide-react";
+import { BarChart3, CalendarDays, CheckCircle2, Inbox, Link2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import { api } from "./lib/api.js";
 import { CalendarView } from "./components/CalendarView.jsx";
 import { InboxView } from "./components/InboxView.jsx";
 import { AccountsView } from "./components/AccountsView.jsx";
+import { SuggestView } from "./components/SuggestView.jsx";
+import { StatsView } from "./components/StatsView.jsx";
 
 const TABS = [
   { id: "calendar", label: "Calendario", icon: CalendarDays },
+  { id: "suggest", label: "Sugerencias", icon: Sparkles },
   { id: "inbox", label: "Inbox", icon: Inbox },
+  { id: "stats", label: "Estadísticas", icon: BarChart3 },
   { id: "accounts", label: "Cuentas", icon: Link2 },
 ];
 
@@ -90,7 +94,9 @@ export default function App() {
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 py-6">
         <div key={tab} className="animate-fade-up">
           {tab === "calendar" && <CalendarView />}
+          {tab === "suggest" && <SuggestView />}
           {tab === "inbox" && <InboxView />}
+          {tab === "stats" && <StatsView />}
           {tab === "accounts" && <AccountsView />}
         </div>
       </main>
