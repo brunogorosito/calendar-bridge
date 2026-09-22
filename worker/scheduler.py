@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from app.config import get_settings
@@ -40,6 +41,13 @@ async def sync_all():
                 log.error("sync failed for %s (%s): %s", acc.provider, acc.provider_email, exc)
 
 
+async def send_daily():
+    from app.services.notify import send_daily_summary
+
+    async with SessionLocal() as db:
+        await send_daily_summary(db)
+
+
 async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
@@ -48,6 +56,14 @@ async def main():
         id="sync_all",
         replace_existing=True,
     )
+    if settings.smtp_server:
+        scheduler.add_job(
+            send_daily,
+            CronTrigger(hour=settings.daily_summary_hour, minute=0),
+            id="daily_summary",
+            replace_existing=True,
+        )
+        log.info("daily summary scheduled at %s:00", settings.daily_summary_hour)
     scheduler.start()
     log.info("worker started, interval=%s min", settings.sync_interval_minutes)
     try:

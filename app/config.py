@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     default_lunch_end: str = "14:00"
     default_timezone: str = "America/Argentina/Buenos_Aires"
 
+    # Notifications (SMTP) — optional
+    smtp_server: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "calendar-bridge@local"
+    notify_emails: str = ""  # comma-separated recipients
+    daily_summary_hour: int = 8  # hour (server time) to send the daily summary
+
     def google_clients(self) -> list[dict]:
         """All Google OAuth clients: default + extras."""
         clients = [
