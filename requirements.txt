@@ -15,3 +15,5 @@ itsdangerous==2.2.0
 alembic==1.14.0
 icalendar==5.0.13
 recurring-ical-events==2.2.1
+pytest==8.3.4
+pytest-asyncio==0.25.0

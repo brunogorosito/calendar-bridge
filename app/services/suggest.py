@@ -96,34 +96,35 @@ async def suggest_slots(
                 bs = max(bs, lo)
                 be = min(be, hi)
                 if bs > cursor:
-                    free_start = cursor
-                    free_end = bs
-                    if (free_end - free_start).total_seconds() / 60 >= duration_minutes:
-                        slots.append(
-                            {
-                                "start": free_start,
-                                "end": free_start + timedelta(minutes=duration_minutes),
-                                "free_from": free_start,
-                                "free_to": free_end,
-                                "date": d_str,
-                                "holiday": None,
-                            }
-                        )
+                    _emit_slots(slots, cursor, bs, duration_minutes, max_results)
+                    if len(slots) >= max_results:
+                        break
                 cursor = max(cursor, be)
-            if hi > cursor and (hi - cursor).total_seconds() / 60 >= duration_minutes:
-                slots.append(
-                    {
-                        "start": cursor,
-                        "end": cursor + timedelta(minutes=duration_minutes),
-                        "free_from": cursor,
-                        "free_to": hi,
-                        "date": d_str,
-                        "holiday": None,
-                    }
-                )
+            if len(slots) < max_results and hi > cursor:
+                _emit_slots(slots, cursor, hi, duration_minutes, max_results)
 
             if len(slots) >= max_results:
                 break
         day += timedelta(days=1)
 
     return slots[:max_results]
+
+
+def _emit_slots(slots, free_start, free_end, duration_minutes, max_results):
+        """Emit candidate slots every 30 min within [free_start, free_end)."""
+        step = timedelta(minutes=30)
+        cursor = free_start
+        while cursor + timedelta(minutes=duration_minutes) <= free_end:
+            slots.append(
+                {
+                    "start": cursor,
+                    "end": cursor + timedelta(minutes=duration_minutes),
+                    "free_from": free_start,
+                    "free_to": free_end,
+                    "date": cursor.strftime("%Y-%m-%d"),
+                    "holiday": None,
+                }
+            )
+            if len(slots) >= max_results:
+                return
+            cursor += step
