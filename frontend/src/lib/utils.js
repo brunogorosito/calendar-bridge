@@ -35,6 +35,13 @@ export function fmtTime(iso) {
   return iso.slice(11, 16);
 }
 
+export function fmtMinutes(min) {
+  if (!min || min < 60) return `${min || 0} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
 export function fmtDayLong(iso) {
   const d = parseISO(iso);
   return d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });

@@ -1,4 +1,4 @@
-import { fmtTime, parseISO } from "../lib/utils.js";
+import { fmtMinutes, fmtTime, parseISO } from "../lib/utils.js";
 
 export function TodayCard({ day }) {
   const pct = day.busy_minutes + day.free_minutes
@@ -12,7 +12,7 @@ export function TodayCard({ day }) {
           {parseISO(day.date).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" })}
         </div>
         <div className="text-[11px] text-slate-400">
-          {day.busy_minutes} min ocupado · {day.free_minutes} min libre
+          {fmtMinutes(day.busy_minutes)} ocupado · {fmtMinutes(day.free_minutes)} libre
         </div>
       </div>
 

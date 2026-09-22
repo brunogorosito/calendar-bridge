@@ -21,6 +21,7 @@ import {
   monthStartOf,
   fmtDayLong,
   fmtDayShort,
+  fmtMinutes,
   fmtRelativeDay,
   providerLabel,
   providerColor,
@@ -134,8 +135,8 @@ export function CalendarView() {
       {totals && (
         <div className="grid grid-cols-3 gap-3">
           <StatCard label="Reuniones" value={totals.events} accent="text-blue-300" />
-          <StatCard label="Ocupado" value={`${totals.busy} min`} accent="text-amber-300" />
-          <StatCard label="Libre" value={`${totals.free} min`} accent="text-emerald-300" />
+          <StatCard label="Ocupado" value={fmtMinutes(totals.busy)} accent="text-amber-300" />
+          <StatCard label="Libre" value={fmtMinutes(totals.free)} accent="text-emerald-300" />
         </div>
       )}
 
@@ -191,7 +192,7 @@ function DayView({ day, onSelect }) {
         <div>
           <div className="font-semibold capitalize">{fmtRelativeDay(day.date)}</div>
           <div className="text-xs text-slate-400">
-            {day.busy_minutes} min ocupado · {day.free_minutes} min libre
+            {fmtMinutes(day.busy_minutes)} ocupado · {fmtMinutes(day.free_minutes)} libre
           </div>
         </div>
         <LoadBar busy={day.busy_minutes} free={day.free_minutes} />
@@ -339,7 +340,7 @@ function MonthView({ weeks, onSelect }) {
                     {parseInt(d.date.slice(8, 10), 10)}
                   </span>
                   {busy.length > 0 && (
-                    <span className="text-[10px] text-slate-500">{d.busy_minutes} min</span>
+                    <span className="text-[10px] text-slate-500">{fmtMinutes(d.busy_minutes)}</span>
                   )}
                 </div>
                 <div className="h-0.5 rounded-full bg-slate-800 mb-1.5 overflow-hidden">
