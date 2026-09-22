@@ -98,6 +98,7 @@ def _parse_time(value: str, day: datetime) -> datetime:
 TEAMS_NOISE = (
     "reunión de microsoft teams",
     "microsoft teams meeting",
+    "microsoft teams ",
     "unirse:",
     "join:",
     "unirse",
@@ -110,10 +111,19 @@ TEAMS_NOISE = (
     "más información",
     "company logo",
     "logo",
+    "[company logo]",
     "___",
     "____",
     "___ _",
     "…",
+    # sensitive / organizer-only info
+    "passcode:",
+    "código de acceso:",
+    "for organizers:",
+    "para organizadores:",
+    "meeting id:",
+    "id. de reunión:",
+    "id de reunión:",
 )
 
 
@@ -129,7 +139,7 @@ def clean_description(desc: str) -> str:
             continue
         if low.startswith(TEAMS_NOISE):
             continue
-        if line.startswith("http"):
+        if line.startswith("http") or line.startswith("[http"):
             continue
         lines.append(line)
     text = "\n".join(lines).strip()
