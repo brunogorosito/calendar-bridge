@@ -20,6 +20,7 @@ import {
   mondayOf,
   monthStartOf,
   fmtDayLong,
+  fmtDayShort,
   fmtRelativeDay,
   providerLabel,
   providerColor,
