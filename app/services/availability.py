@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import CalendarEvent, User
 from ..schemas import DayView, MonthView, TimeBlock, WeekView
+from .holidays import holiday_on
 
 
 async def _events_in_range(
@@ -34,6 +35,9 @@ async def get_day_view(
     events = await _events_in_range(db, user.id, day_start, day_end)
 
     is_workday = day.weekday() < 5  # lun-vie
+    holiday_name = holiday_on(day.strftime("%Y-%m-%d"))
+    if holiday_name:
+        is_workday = False
 
     ws = _parse_time(user.work_start, day)
     we = _parse_time(user.work_end, day)
@@ -80,6 +84,7 @@ async def get_day_view(
             lunch_start=user.lunch_start or "13:00",
             lunch_end=user.lunch_end or "14:00",
             is_workday=False,
+            holiday=holiday_name,
             blocks=[],
             busy_minutes=0,
             free_minutes=0,

@@ -8,11 +8,11 @@ export function TodayCard({ day }) {
   if (day.is_workday === false) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-center">
-        <div className="text-3xl mb-1">🏖️</div>
+        <div className="text-3xl mb-1">{day.holiday ? "🎉" : "🏖️"}</div>
         <div className="text-sm font-semibold capitalize">
           {parseISO(day.date).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" })}
         </div>
-        <div className="text-xs text-slate-500 mt-1">Día no laboral</div>
+        <div className="text-xs text-slate-500 mt-1">{day.holiday ? `Feriado: ${day.holiday}` : "Día no laboral"}</div>
       </div>
     );
   }

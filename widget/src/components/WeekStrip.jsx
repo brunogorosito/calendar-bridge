@@ -31,7 +31,7 @@ export function WeekStrip({ week }) {
                 />
               </div>
               {isWeekend ? (
-                <span className="text-[8px] text-slate-600">libre</span>
+                <span className="text-[8px] text-slate-600">{d.holiday ? "🎉" : "libre"}</span>
               ) : (
                 firstBusy && (
                   <span className="text-[9px] leading-tight text-slate-400 line-clamp-2 text-center px-1">

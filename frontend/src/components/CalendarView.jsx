@@ -189,9 +189,9 @@ function DayView({ day, onSelect }) {
   if (!day.is_workday) {
     return (
       <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-slate-500">
-        <div className="text-3xl mb-2">🏖️</div>
+        <div className="text-3xl mb-2">{day.holiday ? "🎉" : "🏖️"}</div>
         <div className="font-semibold capitalize text-slate-300">{fmtRelativeDay(day.date)}</div>
-        <div className="text-sm mt-1">Día no laboral</div>
+        <div className="text-sm mt-1">{day.holiday ? `Feriado: ${day.holiday}` : "Día no laboral"}</div>
       </div>
     );
   }
@@ -263,7 +263,9 @@ function WeekView({ days, onSelect }) {
                 <div className={`text-xl font-bold ${isToday ? "text-blue-300" : ""}`}>{parseInt(d.date.slice(8, 10), 10)}</div>
               </div>
               {isWeekend ? (
-                <div className="text-[10px] text-slate-600 text-center pt-3">no laboral</div>
+                <div className="text-[10px] text-slate-600 text-center pt-3">
+                  {d.holiday ? `🎉 ${d.holiday}` : "no laboral"}
+                </div>
               ) : (
                 <div className="space-y-1">
                   {d.blocks
@@ -360,7 +362,7 @@ function MonthView({ weeks, onSelect }) {
                     {parseInt(d.date.slice(8, 10), 10)}
                   </span>
                   {d.is_workday === false ? (
-                    <span className="text-[9px] text-slate-600">no laboral</span>
+                    <span className="text-[9px] text-slate-600">{d.holiday ? "🎉 feriado" : "no laboral"}</span>
                   ) : (
                     busy.length + (hasLunch ? 1 : 0) > 0 && (
                       <span className="text-[10px] text-slate-500">{fmtMinutes(d.busy_minutes)}</span>
