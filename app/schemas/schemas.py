@@ -43,11 +43,13 @@ class TimeBlock(BaseModel):
     start: datetime
     end: datetime
     busy: bool
-    source: str  # google | microsoft | working_hours
+    source: str  # google | microsoft | microsoft_ics | lunch
     summary: str = ""
     description: str = ""
     location: str = ""
     online_meeting_url: str | None = None
+    account_email: str = ""
+    client_name: str | None = None
 
 
 class DayView(BaseModel):

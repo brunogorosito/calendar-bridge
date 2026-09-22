@@ -86,10 +86,13 @@ export function fmtDateTime(iso) {
   });
 }
 
-export function providerLabel(p) {
-  if (p === "google") return "Google";
+export function providerLabel(p, client_name = null) {
+  if (p === "google") {
+    if (client_name === "sancor") return "Google · Sancor";
+    return "Google · renaiss.io";
+  }
   if (p === "microsoft") return "Outlook";
-  if (p === "microsoft_ics") return "Aunesa";
+  if (p === "microsoft_ics") return "Aunesa (ICS)";
   if (p === "lunch") return "Almuerzo";
   return p;
 }
@@ -101,8 +104,12 @@ export function providerShort(p) {
   return "?";
 }
 
-export function providerColor(p) {
-  if (p === "google") return { text: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/25", dot: "bg-sky-500", solid: "bg-sky-500" };
+export function providerColor(p, client_name = null) {
+  if (p === "google") {
+    return client_name === "sancor"
+      ? { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/25", dot: "bg-emerald-500", solid: "bg-emerald-500" }
+      : { text: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/25", dot: "bg-sky-500", solid: "bg-sky-500" };
+  }
   if (p === "microsoft" || p === "microsoft_ics") return { text: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/25", dot: "bg-violet-500", solid: "bg-violet-500" };
   if (p === "lunch") return { text: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/25", dot: "bg-amber-500", solid: "bg-amber-500" };
   return { text: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/25", dot: "bg-slate-500", solid: "bg-slate-500" };

@@ -1,4 +1,4 @@
-import { fmtMinutes, fmtTime, parseISO } from "../lib/utils.js";
+import { fmtMinutes, fmtTime, parseISO, providerLabel } from "../lib/utils.js";
 
 export function TodayCard({ day }) {
   const pct = day.busy_minutes + day.free_minutes
@@ -48,16 +48,22 @@ export function TodayCard({ day }) {
 
 export function Block({ b }) {
   const isLunch = b.source === "lunch";
+  const isSancor = b.source === "google" && b.client_name === "sancor";
   const style = isLunch
     ? "border-amber-500/25 bg-amber-500/10 text-amber-300"
-    : b.source === "google"
-      ? "border-sky-500/25 bg-sky-500/10 text-sky-300"
-      : "border-violet-500/25 bg-violet-500/10 text-violet-300";
+    : isSancor
+      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+      : b.source === "google"
+        ? "border-sky-500/25 bg-sky-500/10 text-sky-300"
+        : "border-violet-500/25 bg-violet-500/10 text-violet-300";
   return (
     <div className={`text-xs rounded-md px-2.5 py-2 border ${style}`}>
       <div className="flex items-center gap-2 mb-0.5">
         <span className="font-mono font-medium">{fmtTime(b.start)}–{fmtTime(b.end)}</span>
         {b.summary && <span className="font-medium truncate">{b.summary}</span>}
+        {b.source !== "lunch" && (
+          <span className="ml-auto shrink-0 text-[10px] opacity-80">{providerLabel(b.source, b.client_name)}</span>
+        )}
       </div>
       {b.description && (
         <p className="text-[11px] leading-snug opacity-80 whitespace-pre-line line-clamp-3">

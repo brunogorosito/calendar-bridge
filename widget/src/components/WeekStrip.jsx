@@ -1,4 +1,4 @@
-import { fmtDayShort, fmtDayNum, todayISO } from "../lib/utils.js";
+import { fmtDayShort, fmtDayNum, providerShort, todayISO } from "../lib/utils.js";
 
 export function WeekStrip({ week }) {
   const today = todayISO();
@@ -35,7 +35,7 @@ export function WeekStrip({ week }) {
               ) : (
                 firstBusy && (
                   <span className="text-[9px] leading-tight text-slate-400 line-clamp-2 text-center px-1">
-                    {firstBusy.summary}
+                    {providerShort(firstBusy.source, firstBusy.client_name)} {firstBusy.summary}
                   </span>
                 )
               )}

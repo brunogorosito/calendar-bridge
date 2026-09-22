@@ -315,12 +315,12 @@ function WeekView({ days, onSelect }) {
                 onClick={() => onSelect(b)}
                 className="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-800/50 transition text-left"
               >
-                <span className={`w-1 h-8 rounded-full ${providerColor(b.source).solid}`} />
+                <span className={`w-1 h-8 rounded-full ${providerColor(b.source, b.client_name).solid}`} />
                 <span className="text-xs text-slate-500 w-14 shrink-0 font-medium">
                   {fmtDayShort(b.date)} {fmtTime(b.start)}
                 </span>
                 <span className="text-sm font-medium truncate text-slate-200">{b.summary}</span>
-                <span className="ml-auto text-[10px] text-slate-600 shrink-0">{providerLabel(b.source)}</span>
+                <span className="ml-auto text-[10px] text-slate-600 shrink-0">{providerLabel(b.source, b.client_name)}</span>
               </button>
             ))}
           {days.every((d) => !d.blocks.some((b) => b.busy && b.source !== "lunch")) && (
@@ -385,9 +385,9 @@ function MonthView({ weeks, onSelect }) {
                         key={j}
                         onClick={() => onSelect(b)}
                         className="w-full flex items-center gap-1 text-left rounded px-1 py-0.5 text-[10px] hover:opacity-80 transition"
-                        style={{ background: b.source === "google" ? "rgba(14,165,233,.12)" : "rgba(139,92,246,.12)" }}
+                        style={{ background: b.source === "google" ? (b.client_name === "sancor" ? "rgba(16,185,129,.12)" : "rgba(14,165,233,.12)") : "rgba(139,92,246,.12)" }}
                       >
-                        <span className={`text-[8px] font-medium ${providerColor(b.source).text}`}>{providerShort(b.source)}</span>
+                        <span className={`text-[8px] font-medium ${providerColor(b.source, b.client_name).text}`}>{providerShort(b.source)}</span>
                         <span className="truncate text-slate-400">{fmtTime(b.start)} {b.summary}</span>
                       </button>
                     ))}
@@ -408,7 +408,7 @@ function MonthView({ weeks, onSelect }) {
 /* ---------- SHARED ---------- */
 
 function EventChip({ b, onClick }) {
-  const c = providerColor(b.source);
+  const c = providerColor(b.source, b.client_name);
   return (
     <button
       onClick={onClick}
@@ -416,7 +416,8 @@ function EventChip({ b, onClick }) {
     >
       <span className={`font-medium ${c.text} text-xs`}>{fmtTime(b.start)}–{fmtTime(b.end)}</span>
       <span className="text-xs truncate text-slate-200">{b.summary}</span>
-      {b.online_meeting_url && <Video size={12} className="ml-auto shrink-0 text-slate-500" />}
+      <span className={`ml-auto shrink-0 text-[10px] ${c.text}`}>{providerLabel(b.source, b.client_name)}</span>
+      {b.online_meeting_url && <Video size={12} className="shrink-0 text-slate-500" />}
     </button>
   );
 }
@@ -437,7 +438,7 @@ function LoadBar({ busy, free }) {
 }
 
 function EventModal({ block, onClose }) {
-  const c = providerColor(block.source);
+  const c = providerColor(block.source, block.client_name);
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -454,7 +455,7 @@ function EventModal({ block, onClose }) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${c.solid}`} />
-            <span className={`text-[11px] font-medium uppercase tracking-wide ${c.text}`}>{providerLabel(block.source)}</span>
+            <span className={`text-[11px] font-medium uppercase tracking-wide ${c.text}`}>{providerLabel(block.source, block.client_name)}</span>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-md hover:bg-slate-800 transition">
             <X size={17} className="text-slate-500" />

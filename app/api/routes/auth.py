@@ -103,7 +103,22 @@ async def callback(
 @router.get("/accounts", response_model=list[AccountOut])
 async def list_accounts(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProviderAccount))
-    return [AccountOut.model_validate(acc) for acc in result.scalars().all()]
+    accounts = [AccountOut.model_validate(acc) for acc in result.scalars().all()]
+
+    # Representar el calendario Outlook publicado (ICS) como una cuenta de solo lectura.
+    settings = get_settings()
+    if settings.outlook_ics_url and not any(a.provider == "microsoft_ics" for a in accounts):
+        accounts.append(
+            AccountOut(
+                id=0,
+                provider="microsoft_ics",
+                provider_email="Calendario Outlook publicado (ICS)",
+                client_name=None,
+                scopes=[],
+                linked=True,
+            )
+        )
+    return accounts
 
 
 @router.get("/google/clients", response_model=list[GoogleClientOut])

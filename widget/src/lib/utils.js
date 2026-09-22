@@ -37,9 +37,16 @@ export function fmtDayNum(iso) {
   return String(parseInt(iso.slice(8, 10), 10));
 }
 
-export function providerShort(p) {
-  if (p === "google") return "G";
+export function providerShort(p, client_name = null) {
+  if (p === "google") return client_name === "sancor" ? "S" : "R";
   if (p === "microsoft" || p === "microsoft_ics") return "O";
   if (p === "lunch") return "A";
   return "?";
+}
+
+export function providerLabel(p, client_name = null) {
+  if (p === "google") return client_name === "sancor" ? "Sancor" : "renaiss.io";
+  if (p === "microsoft" || p === "microsoft_ics") return "Aunesa";
+  if (p === "lunch") return "Almuerzo";
+  return p;
 }

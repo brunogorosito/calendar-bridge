@@ -5,9 +5,22 @@ from datetime import datetime, time, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import CalendarEvent, User
+from ..models import CalendarEvent, ProviderAccount, User
 from ..schemas import DayView, MonthView, TimeBlock, WeekView
 from .holidays import holiday_on
+
+
+async def _account_map(db: AsyncSession, user_ids: set[int]) -> dict[int, tuple[str, str | None]]:
+    """Map user_id -> (provider_email, client_name) for the given user ids."""
+    if not user_ids:
+        return {}
+    result = await db.execute(
+        select(ProviderAccount).where(ProviderAccount.user_id.in_(user_ids))
+    )
+    return {
+        acc.user_id: (acc.provider_email, acc.client_name)
+        for acc in result.scalars().all()
+    }
 
 
 async def _events_in_range(
@@ -45,11 +58,16 @@ async def get_day_view(
     le = _parse_time(user.lunch_end or "14:00", day)
 
     blocks: list[TimeBlock] = []
+    if events:
+        account_map = await _account_map(db, {ev.user_id for ev in events})
+    else:
+        account_map = {}
     for ev in events:
         s = max(ev.start, day_start)
         e = min(ev.end, day_end)
         if s >= e:
             continue
+        email, client_name = account_map.get(ev.user_id, ("", None))
         blocks.append(
             TimeBlock(
                 start=s,
@@ -60,6 +78,8 @@ async def get_day_view(
                 description=clean_description(ev.description),
                 location=ev.location,
                 online_meeting_url=ev.online_meeting_url,
+                account_email=email,
+                client_name=client_name,
             )
         )
     # almuerzo como bloque propio (solo días laborables)
