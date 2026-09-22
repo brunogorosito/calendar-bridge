@@ -44,6 +44,10 @@ class TimeBlock(BaseModel):
     end: datetime
     busy: bool
     source: str  # google | microsoft | working_hours
+    summary: str = ""
+    description: str = ""
+    location: str = ""
+    online_meeting_url: str | None = None
 
 
 class DayView(BaseModel):
