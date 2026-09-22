@@ -82,12 +82,12 @@ export function CalendarView() {
 
   const title = useMemo(() => {
     if (!data) return "";
-    if (view === "day") return fmtDayLong(data.days[0].date);
-    if (view === "week") {
+    if (data.type === "day") return fmtDayLong(data.days[0].date);
+    if (data.type === "week") {
       return `${fmtRelativeDay(data.days[0].date)} – ${fmtRelativeDay(data.days[6].date)}`;
     }
     return parseISO(anchorISO).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-  }, [data, view, anchorISO]);
+  }, [data, anchorISO]);
 
   const totals = useMemo(() => {
     if (!data) return null;
