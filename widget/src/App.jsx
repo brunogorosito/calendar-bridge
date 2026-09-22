@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link2, RefreshCw, Settings, X } from "lucide-react";
 import { api, getApiBase, setApiBase } from "./lib/api.js";
+import { todayISO } from "./lib/utils.js";
 import { TodayCard } from "./components/TodayCard.jsx";
 import { WeekStrip } from "./components/WeekStrip.jsx";
 import { SettingsModal } from "./components/SettingsModal.jsx";
