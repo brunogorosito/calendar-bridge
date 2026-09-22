@@ -57,11 +57,11 @@ export default function App() {
     <div className="min-h-full flex flex-col">
       <header className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm">
-            ☕
+          <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-300">
+            CB
           </div>
           <div>
-            <div className="font-bold text-sm leading-tight">Calendar Bridge</div>
+            <div className="font-semibold text-sm leading-tight text-slate-100">Calendar Bridge</div>
             <div className="text-[11px] text-slate-500">widget</div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Inbox as InboxIcon, Mail, MailOpen, Paperclip, Search } from "lucide-react";
+import { Mail, MailOpen, Paperclip, Search } from "lucide-react";
 import { api } from "../lib/api.js";
 import {
   avatarColor,
@@ -48,7 +48,7 @@ export function InboxView() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 space-y-3">
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-56">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -56,19 +56,19 @@ export function InboxView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por asunto o remitente…"
-              className="w-full bg-slate-800/60 border border-white/5 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition"
+              className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-slate-600 transition"
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={unreadOnly}
               onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="accent-blue-500 w-4 h-4"
+              className="accent-slate-400 w-4 h-4"
             />
             Solo sin leer
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-semibold">
+              <span className="px-1.5 py-0.5 rounded-full bg-slate-700 text-slate-200 text-[10px] font-medium">
                 {unreadCount}
               </span>
             )}
@@ -79,8 +79,8 @@ export function InboxView() {
           <div className="flex gap-1.5">
             <button
               onClick={() => setProviderFilter("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                providerFilter === "all" ? "bg-slate-700 text-white" : "bg-slate-800/60 text-slate-400 hover:text-white"
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                providerFilter === "all" ? "bg-slate-700 text-slate-100" : "bg-slate-800/60 text-slate-500 hover:text-slate-300"
               }`}
             >
               Todos
@@ -91,8 +91,8 @@ export function InboxView() {
                 <button
                   key={p}
                   onClick={() => setProviderFilter(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                    providerFilter === p ? "bg-slate-700 text-white" : "bg-slate-800/60 text-slate-400 hover:text-white"
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                    providerFilter === p ? "bg-slate-700 text-slate-100" : "bg-slate-800/60 text-slate-500 hover:text-slate-300"
                   }`}
                 >
                   {providerLabel(p)} · {count}
@@ -118,8 +118,8 @@ export function InboxView() {
       )}
 
       {!loading && visible.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-16 text-slate-500">
-          <div className="w-16 h-16 rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 py-16 text-slate-600">
+          <div className="w-16 h-16 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-center">
             <Mail size={28} className="opacity-60" />
           </div>
           <div className="text-sm">{unreadOnly ? "No hay mensajes sin leer" : "Sin mensajes"}</div>
@@ -127,7 +127,7 @@ export function InboxView() {
       )}
 
       {!loading && visible.length > 0 && (
-        <div className="divide-y divide-white/5 rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden">
+        <div className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
           {visible.map((m) => {
             const sender = m.from_name || m.from_email;
             const c = providerColor(m.provider);
@@ -146,9 +146,9 @@ export function InboxView() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
-                    {!m.is_read ? <Mail size={13} className="text-blue-400 shrink-0" /> : <MailOpen size={13} className="text-slate-500 shrink-0" />}
+                    {!m.is_read ? <Mail size={13} className="text-sky-400 shrink-0" /> : <MailOpen size={13} className="text-slate-500 shrink-0" />}
                     <span className="text-xs font-medium text-slate-300 truncate">{sender}</span>
-                    <span className={`ml-auto shrink-0 text-[11px] ${!m.is_read ? "text-blue-300 font-medium" : "text-slate-500"}`}>
+                    <span className={`ml-auto shrink-0 text-[11px] ${!m.is_read ? "text-slate-200 font-medium" : "text-slate-500"}`}>
                       {timeAgo(m.received_at)}
                     </span>
                   </div>

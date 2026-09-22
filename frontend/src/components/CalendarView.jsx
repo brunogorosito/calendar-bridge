@@ -101,13 +101,13 @@ export function CalendarView() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-slate-900/50 p-1">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/40 p-0.5">
           {VIEWS.map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition capitalize ${
-                view === v ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow" : "text-slate-400 hover:text-white"
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition capitalize ${
+                view === v ? "bg-slate-700 text-slate-100" : "text-slate-500 hover:text-slate-300"
               }`}
             >
               {v}
@@ -115,17 +115,17 @@ export function CalendarView() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-white/5 transition active:scale-95">
-            <ChevronLeft size={18} />
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-800 transition">
+            <ChevronLeft size={16} />
           </button>
-          <span className="text-sm font-semibold capitalize min-w-44 text-center text-slate-200">{title}</span>
-          <button onClick={() => navigate(1)} className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-white/5 transition active:scale-95">
-            <ChevronRight size={18} />
+          <span className="text-sm font-medium capitalize min-w-44 text-center text-slate-300">{title}</span>
+          <button onClick={() => navigate(1)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-800 transition">
+            <ChevronRight size={16} />
           </button>
           <button
             onClick={goToday}
-            className="px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-white/5 text-sm transition active:scale-95"
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-800 text-sm transition"
           >
             Hoy
           </button>
@@ -134,9 +134,9 @@ export function CalendarView() {
 
       {totals && (
         <div className="grid grid-cols-3 gap-3">
-          <StatCard label="Reuniones" value={totals.events} accent="text-blue-300" />
-          <StatCard label="Ocupado" value={fmtMinutes(totals.busy)} accent="text-amber-300" />
-          <StatCard label="Libre" value={fmtMinutes(totals.free)} accent="text-emerald-300" />
+          <StatCard label="Reuniones" value={totals.events} />
+          <StatCard label="Ocupado" value={fmtMinutes(totals.busy)} />
+          <StatCard label="Libre" value={fmtMinutes(totals.free)} />
         </div>
       )}
 
@@ -167,11 +167,11 @@ export function CalendarView() {
   );
 }
 
-function StatCard({ label, value, accent }) {
+function StatCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-      <div className={`text-2xl font-bold ${accent}`}>{value}</div>
-      <div className="text-xs text-slate-400 mt-0.5">{label}</div>
+    <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+      <div className="text-xl font-semibold text-slate-100">{value}</div>
+      <div className="text-xs text-slate-500 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -188,27 +188,28 @@ function DayView({ day, onSelect }) {
 
   if (!day.is_workday) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-slate-500">
-        <div className="text-3xl mb-2">{day.holiday ? "🎉" : "🏖️"}</div>
-        <div className="font-semibold capitalize text-slate-300">{fmtRelativeDay(day.date)}</div>
-        <div className="text-sm mt-1">{day.holiday ? `Feriado: ${day.holiday}` : "Día no laboral"}</div>
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-10 text-center">
+        <div className="font-medium capitalize text-slate-200">{fmtRelativeDay(day.date)}</div>
+        <div className="text-sm mt-1 text-slate-500">
+          {day.holiday ? `Feriado · ${day.holiday}` : "Día no laboral"}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 flex items-center justify-between">
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 flex items-center justify-between">
         <div>
-          <div className="font-semibold capitalize">{fmtRelativeDay(day.date)}</div>
-          <div className="text-xs text-slate-400">
+          <div className="font-medium capitalize">{fmtRelativeDay(day.date)}</div>
+          <div className="text-xs text-slate-500">
             {fmtMinutes(day.busy_minutes)} ocupado · {fmtMinutes(day.free_minutes)} libre
           </div>
         </div>
         <LoadBar busy={day.busy_minutes} free={day.free_minutes} />
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-slate-900/30 overflow-hidden">
+      <div className="rounded-xl border border-slate-800 bg-slate-900/20 overflow-hidden">
         {hours.map((h) => {
           const atHour = busyBlocks.filter((b) => parseInt(b.start.slice(11, 13), 10) === h);
           const now = new Date();
@@ -216,18 +217,18 @@ function DayView({ day, onSelect }) {
           return (
             <div
               key={h}
-              className={`relative grid grid-cols-[64px_1fr] min-h-14 border-b border-white/5 last:border-0 ${
-                isNow ? "bg-blue-500/5" : ""
+              className={`relative grid grid-cols-[56px_1fr] min-h-13 border-b border-slate-800/60 last:border-0 ${
+                isNow ? "bg-sky-500/5" : ""
               }`}
             >
-              <div className="px-3 py-1.5 text-[11px] font-medium text-slate-500 border-r border-white/5 flex items-start justify-end pt-2">
+              <div className="px-2.5 py-1.5 text-[11px] font-medium text-slate-500 border-r border-slate-800/60 flex items-start justify-end pt-2">
                 {String(h).padStart(2, "0")}:00
               </div>
               <div className="relative px-2 py-1 space-y-1">
                 {atHour.map((b, i) => (
                   <EventChip key={i} b={b} onClick={() => onSelect(b)} />
                 ))}
-                {isNow && <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500/70" />}
+                {isNow && <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500/60" />}
               </div>
             </div>
           );
@@ -252,19 +253,19 @@ function WeekView({ days, onSelect }) {
           return (
             <div
               key={d.date}
-              className={`rounded-2xl border p-3 ${
-                isToday ? "border-blue-500/40 bg-blue-500/5" : isWeekend ? "border-white/5 bg-slate-900/20 opacity-60" : "border-white/5 bg-slate-900/40"
+              className={`rounded-xl border p-3 ${
+                isToday ? "border-slate-500/50 bg-slate-900/60" : isWeekend ? "border-slate-800 bg-slate-900/15 opacity-60" : "border-slate-800 bg-slate-900/35"
               }`}
             >
               <div className="text-center mb-2">
-                <div className={`text-xs font-medium capitalize ${isToday ? "text-blue-300" : "text-slate-400"}`}>
+                <div className={`text-xs font-medium capitalize ${isToday ? "text-slate-200" : "text-slate-500"}`}>
                   {fmtDayShort(d.date)}
                 </div>
-                <div className={`text-xl font-bold ${isToday ? "text-blue-300" : ""}`}>{parseInt(d.date.slice(8, 10), 10)}</div>
+                <div className={`text-lg font-semibold ${isToday ? "text-slate-100" : "text-slate-400"}`}>{parseInt(d.date.slice(8, 10), 10)}</div>
               </div>
               {isWeekend ? (
                 <div className="text-[10px] text-slate-600 text-center pt-3">
-                  {d.holiday ? `🎉 ${d.holiday}` : "no laboral"}
+                  {d.holiday || "no laboral"}
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -277,18 +278,18 @@ function WeekView({ days, onSelect }) {
                         <button
                           key={i}
                           onClick={() => onSelect(b)}
-                          className={`w-full text-left rounded-lg px-2 py-1 text-[10px] leading-tight border transition hover:opacity-80 ${
-                            isLunch ? "border-amber-500/20 bg-amber-500/10" : "border-white/5 bg-blue-500/10"
+                          className={`w-full text-left rounded-md px-2 py-1 text-[10px] leading-tight border transition hover:opacity-80 ${
+                            isLunch ? "border-amber-500/20 bg-amber-500/10" : "border-sky-500/15 bg-sky-500/10"
                           }`}
                         >
-                          <div className={`font-medium ${isLunch ? "text-amber-200" : "text-blue-200"}`}>
+                          <div className={`font-medium ${isLunch ? "text-amber-300" : "text-sky-300"}`}>
                             {fmtTime(b.start)} {b.summary}
                           </div>
                         </button>
                       );
                     })}
                   {d.blocks.filter((b) => b.busy).length > 6 && (
-                    <div className="text-[10px] text-slate-500 px-1">
+                    <div className="text-[10px] text-slate-600 px-1">
                       +{d.blocks.filter((b) => b.busy).length - 6} más
                     </div>
                   )}
@@ -300,9 +301,9 @@ function WeekView({ days, onSelect }) {
       </div>
 
       {/* Agenda compacta */}
-      <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Clock size={15} className="text-blue-400" /> Agenda de la semana
+      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+          <Clock size={14} className="text-slate-500" /> Agenda de la semana
         </h3>
         <div className="space-y-1.5">
           {days
@@ -312,18 +313,18 @@ function WeekView({ days, onSelect }) {
               <button
                 key={i}
                 onClick={() => onSelect(b)}
-                className="w-full flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-slate-800/50 transition text-left"
+                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-800/50 transition text-left"
               >
-                <span className={`w-1.5 h-8 rounded-full ${providerColor(b.source).solid}`} />
-                <span className="text-xs text-slate-400 w-14 shrink-0 font-medium">
+                <span className={`w-1 h-8 rounded-full ${providerColor(b.source).solid}`} />
+                <span className="text-xs text-slate-500 w-14 shrink-0 font-medium">
                   {fmtDayShort(b.date)} {fmtTime(b.start)}
                 </span>
-                <span className="text-sm font-medium truncate">{b.summary}</span>
-                <span className="ml-auto text-[10px] text-slate-500 shrink-0">{providerLabel(b.source)}</span>
+                <span className="text-sm font-medium truncate text-slate-200">{b.summary}</span>
+                <span className="ml-auto text-[10px] text-slate-600 shrink-0">{providerLabel(b.source)}</span>
               </button>
             ))}
           {days.every((d) => !d.blocks.some((b) => b.busy && b.source !== "lunch")) && (
-            <div className="text-sm text-slate-500 py-4 text-center">Semana libre 🎉</div>
+            <div className="text-sm text-slate-600 py-4 text-center">Semana libre</div>
           )}
         </div>
       </div>
@@ -353,31 +354,30 @@ function MonthView({ weeks, onSelect }) {
             return (
               <div
                 key={d.date}
-                className={`rounded-xl border p-1.5 min-h-24 transition hover:border-blue-500/40 ${
-                  isToday ? "border-blue-500/50 bg-blue-500/5" : d.is_workday === false ? "border-white/5 bg-slate-900/20 opacity-60" : "border-white/5 bg-slate-900/40"
+                className={`rounded-lg border p-1.5 min-h-24 transition hover:border-slate-600 ${
+                  isToday ? "border-slate-500 bg-slate-900/60" : d.is_workday === false ? "border-slate-800 bg-slate-900/10 opacity-60" : "border-slate-800 bg-slate-900/35"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1 px-0.5">
-                  <span className={`text-xs font-semibold ${isToday ? "text-blue-300" : "text-slate-400"}`}>
+                  <span className={`text-xs font-medium ${isToday ? "text-slate-100" : "text-slate-500"}`}>
                     {parseInt(d.date.slice(8, 10), 10)}
                   </span>
                   {d.is_workday === false ? (
-                    <span className="text-[9px] text-slate-600">{d.holiday ? "🎉 feriado" : "no laboral"}</span>
+                    <span className="text-[9px] text-slate-600">{d.holiday ? "feriado" : "no laboral"}</span>
                   ) : (
                     busy.length + (hasLunch ? 1 : 0) > 0 && (
-                      <span className="text-[10px] text-slate-500">{fmtMinutes(d.busy_minutes)}</span>
+                      <span className="text-[10px] text-slate-600">{fmtMinutes(d.busy_minutes)}</span>
                     )
                   )}
                 </div>
                 <div className="h-0.5 rounded-full bg-slate-800 mb-1.5 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${Math.max(load * 100, busy.length ? 8 : 0)}%` }} />
+                  <div className="h-full bg-slate-500" style={{ width: `${Math.max(load * 100, busy.length ? 8 : 0)}%` }} />
                 </div>
                 {d.is_workday !== false && (
                   <div className="space-y-0.5">
                     {hasLunch && (
-                      <div className="flex items-center gap-1 rounded px-1 py-0.5 text-[10px]" style={{ background: "rgba(245,158,11,.15)" }}>
-                        <span className="text-[8px] font-bold text-amber-300">☕</span>
-                        <span className="truncate text-amber-200">Almuerzo</span>
+                      <div className="flex items-center gap-1 rounded px-1 py-0.5 text-[10px]" style={{ background: "rgba(245,158,11,.10)" }}>
+                        <span className="truncate text-amber-300">Almuerzo</span>
                       </div>
                     )}
                     {busy.slice(0, 2).map((b, j) => (
@@ -385,14 +385,14 @@ function MonthView({ weeks, onSelect }) {
                         key={j}
                         onClick={() => onSelect(b)}
                         className="w-full flex items-center gap-1 text-left rounded px-1 py-0.5 text-[10px] hover:opacity-80 transition"
-                        style={{ background: b.source === "google" ? "rgba(59,130,246,.15)" : "rgba(168,85,247,.15)" }}
+                        style={{ background: b.source === "google" ? "rgba(14,165,233,.12)" : "rgba(139,92,246,.12)" }}
                       >
-                        <span className={`text-[8px] font-bold ${providerColor(b.source).text}`}>{providerShort(b.source)}</span>
-                        <span className="truncate text-slate-300">{fmtTime(b.start)} {b.summary}</span>
+                        <span className={`text-[8px] font-medium ${providerColor(b.source).text}`}>{providerShort(b.source)}</span>
+                        <span className="truncate text-slate-400">{fmtTime(b.start)} {b.summary}</span>
                       </button>
                     ))}
                     {busy.length > 2 && (
-                      <div className="text-[10px] text-slate-500 px-1">+{busy.length - 2} más</div>
+                      <div className="text-[10px] text-slate-600 px-1">+{busy.length - 2} más</div>
                     )}
                   </div>
                 )}
@@ -412,11 +412,11 @@ function EventChip({ b, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2 text-left rounded-lg px-2.5 py-1.5 border ${c.bg} ${c.border} transition hover:brightness-110 active:scale-[0.99]`}
+      className={`w-full flex items-center gap-2 text-left rounded-md px-2.5 py-1.5 border ${c.bg} ${c.border} transition hover:opacity-85`}
     >
       <span className={`font-medium ${c.text} text-xs`}>{fmtTime(b.start)}–{fmtTime(b.end)}</span>
       <span className="text-xs truncate text-slate-200">{b.summary}</span>
-      {b.online_meeting_url && <Video size={12} className="ml-auto shrink-0 text-slate-400" />}
+      {b.online_meeting_url && <Video size={12} className="ml-auto shrink-0 text-slate-500" />}
     </button>
   );
 }
@@ -426,13 +426,10 @@ function LoadBar({ busy, free }) {
   const pct = total ? Math.round((busy / total) * 100) : 0;
   return (
     <div className="w-40">
-      <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-amber-500 to-blue-500 transition-all"
-          style={{ width: `${pct}%` }}
-        />
+      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-full bg-slate-500 transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <div className="text-[10px] text-slate-500 mt-1 text-right">
+      <div className="text-[10px] text-slate-600 mt-1 text-right">
         {pct}% ocupado
       </div>
     </div>
@@ -449,24 +446,24 @@ function EventModal({ block, onClose }) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 sm:p-6" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl animate-modal"
+        className="relative w-full max-w-lg rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl animate-modal"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${c.solid}`} />
-            <span className={`text-[11px] font-semibold uppercase tracking-wide ${c.text}`}>{providerLabel(block.source)}</span>
+            <span className={`w-2 h-2 rounded-full ${c.solid}`} />
+            <span className={`text-[11px] font-medium uppercase tracking-wide ${c.text}`}>{providerLabel(block.source)}</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-800 transition">
-            <X size={18} className="text-slate-400" />
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-slate-800 transition">
+            <X size={17} className="text-slate-500" />
           </button>
         </div>
 
-        <h2 className="text-lg font-bold mb-1">{block.summary || "Sin título"}</h2>
-        <div className="flex items-center gap-2 text-sm text-slate-300 mb-3">
-          <Clock size={15} className="text-slate-500" />
+        <h2 className="text-lg font-semibold mb-1 text-slate-100">{block.summary || "Sin título"}</h2>
+        <div className="flex items-center gap-2 text-sm text-slate-400 mb-3">
+          <Clock size={14} className="text-slate-600" />
           <span>
             {fmtDayLong(block.start.slice(0, 10))} · {fmtTime(block.start)} – {fmtTime(block.end)}
           </span>
@@ -474,13 +471,13 @@ function EventModal({ block, onClose }) {
 
         {block.location && (
           <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-            <MapPin size={15} className="text-slate-500" />
+            <MapPin size={14} className="text-slate-600" />
             {block.location}
           </div>
         )}
 
         {block.description && (
-          <div className="rounded-xl bg-slate-800/50 border border-white/5 p-3 text-sm text-slate-300 whitespace-pre-line max-h-60 overflow-y-auto mb-4">
+          <div className="rounded-lg bg-slate-800/60 border border-slate-800 p-3 text-sm text-slate-300 whitespace-pre-line max-h-60 overflow-y-auto mb-4">
             {block.description}
           </div>
         )}
@@ -490,10 +487,10 @@ function EventModal({ block, onClose }) {
             href={block.online_meeting_url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:brightness-110 text-sm font-semibold transition active:scale-[0.99]"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition"
           >
-            <Video size={16} /> Unirse a la reunión
-            <ExternalLink size={13} />
+            <Video size={15} /> Unirse a la reunión
+            <ExternalLink size={12} />
           </a>
         )}
       </div>

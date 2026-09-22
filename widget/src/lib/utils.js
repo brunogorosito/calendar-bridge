@@ -40,6 +40,6 @@ export function fmtDayNum(iso) {
 export function providerShort(p) {
   if (p === "google") return "G";
   if (p === "microsoft" || p === "microsoft_ics") return "O";
-  if (p === "lunch") return "☕";
+  if (p === "lunch") return "A";
   return "?";
 }

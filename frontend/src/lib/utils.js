@@ -97,15 +97,15 @@ export function providerLabel(p) {
 export function providerShort(p) {
   if (p === "google") return "G";
   if (p === "microsoft" || p === "microsoft_ics") return "O";
-  if (p === "lunch") return "☕";
+  if (p === "lunch") return "A";
   return "?";
 }
 
 export function providerColor(p) {
-  if (p === "google") return { text: "text-blue-300", bg: "bg-blue-500/15", border: "border-blue-500/30", dot: "bg-blue-500", solid: "bg-blue-500" };
-  if (p === "microsoft" || p === "microsoft_ics") return { text: "text-purple-300", bg: "bg-purple-500/15", border: "border-purple-500/30", dot: "bg-purple-500", solid: "bg-purple-500" };
-  if (p === "lunch") return { text: "text-amber-300", bg: "bg-amber-500/15", border: "border-amber-500/30", dot: "bg-amber-500", solid: "bg-amber-500" };
-  return { text: "text-slate-300", bg: "bg-slate-500/15", border: "border-slate-500/30", dot: "bg-slate-500", solid: "bg-slate-500" };
+  if (p === "google") return { text: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/25", dot: "bg-sky-500", solid: "bg-sky-500" };
+  if (p === "microsoft" || p === "microsoft_ics") return { text: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/25", dot: "bg-violet-500", solid: "bg-violet-500" };
+  if (p === "lunch") return { text: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/25", dot: "bg-amber-500", solid: "bg-amber-500" };
+  return { text: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/25", dot: "bg-slate-500", solid: "bg-slate-500" };
 }
 
 const AVATAR_COLORS = ["bg-blue-600", "bg-emerald-600", "bg-fuchsia-600", "bg-amber-600", "bg-rose-600", "bg-cyan-600", "bg-indigo-600", "bg-lime-600"];
