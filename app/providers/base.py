@@ -68,6 +68,40 @@ class CalendarProvider(ABC):
         self, access_token: str, since: datetime, limit: int = 50
     ) -> list[NormalizedEmail]: ...
 
+    # --- write operations (create/update/delete events) ---
+
+    @abstractmethod
+    async def create_event(
+        self,
+        access_token: str,
+        *,
+        summary: str,
+        start: datetime,
+        end: datetime,
+        description: str = "",
+        location: str = "",
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent: ...
+
+    @abstractmethod
+    async def update_event(
+        self,
+        access_token: str,
+        provider_event_id: str,
+        *,
+        summary: str | None = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        description: str | None = None,
+        location: str | None = None,
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent: ...
+
+    @abstractmethod
+    async def delete_event(
+        self, access_token: str, provider_event_id: str, calendar_id: str = "primary"
+    ) -> None: ...
+
 
 class ProviderError(Exception):
     def __init__(self, provider: str, message: str):

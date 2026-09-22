@@ -158,3 +158,85 @@ class MicrosoftProvider(CalendarProvider):
                 )
             )
         return emails
+
+    async def _graph_send(self, access_token: str, method: str, path: str, body: dict | None = None) -> dict:
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        async with httpx.AsyncClient() as client:
+            resp = await client.request(method, f"{GRAPH_URL}/{path}", json=body, headers=headers)
+            if resp.status_code not in (200, 201, 204):
+                raise ProviderError(self.name, f"{method} {path} failed: {resp.text}")
+            return resp.json() if resp.content else {}
+
+    async def create_event(
+        self,
+        access_token: str,
+        *,
+        summary: str,
+        start: datetime,
+        end: datetime,
+        description: str = "",
+        location: str = "",
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent:
+        body = {
+            "subject": summary,
+            "body": {"contentType": "text", "content": description or ""},
+            "location": {"displayName": location},
+            "start": {"dateTime": start.isoformat(), "timeZone": "UTC"},
+            "end": {"dateTime": end.isoformat(), "timeZone": "UTC"},
+        }
+        data = await self._graph_send(access_token, "POST", "me/events", body)
+        return self._from_item(data)
+
+    async def update_event(
+        self,
+        access_token: str,
+        provider_event_id: str,
+        *,
+        summary: str | None = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        description: str | None = None,
+        location: str | None = None,
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent:
+        body = {}
+        if summary is not None:
+            body["subject"] = summary
+        if description is not None:
+            body["body"] = {"contentType": "text", "content": description}
+        if location is not None:
+            body["location"] = {"displayName": location}
+        if start is not None:
+            body["start"] = {"dateTime": start.isoformat(), "timeZone": "UTC"}
+        if end is not None:
+            body["end"] = {"dateTime": end.isoformat(), "timeZone": "UTC"}
+        data = await self._graph_send(
+            access_token, "PATCH", f"me/events/{provider_event_id}", body
+        )
+        return self._from_item(data)
+
+    async def delete_event(
+        self, access_token: str, provider_event_id: str, calendar_id: str = "primary"
+    ) -> None:
+        await self._graph_send(access_token, "DELETE", f"me/events/{provider_event_id}")
+
+    @staticmethod
+    def _from_item(item: dict) -> NormalizedEvent:
+        online_url = None
+        om = item.get("onlineMeeting")
+        if om:
+            online_url = om.get("joinUrl") or om.get("joinWebUrl")
+        return NormalizedEvent(
+            provider_event_id=item["id"],
+            calendar_id=item.get("organizer", {}).get("emailAddress", {}).get("address", "primary"),
+            summary=item.get("subject", ""),
+            description=item.get("bodyPreview", ""),
+            location=item.get("location", {}).get("displayName", ""),
+            start=datetime.fromisoformat(item["start"]["dateTime"]).replace(tzinfo=None),
+            end=datetime.fromisoformat(item["end"]["dateTime"]).replace(tzinfo=None),
+            all_day=item.get("isAllDay", False),
+            busy=item.get("showAs") in ("busy", "tentative", "oof"),
+            online_meeting_url=online_url,
+            raw=item,
+        )

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from .api.routes import auth, calendar, inbox
+from .api.routes import auth, calendar, inbox, suggest
 from .config import get_settings
 from .database import Base, engine
 
@@ -39,6 +39,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(calendar.router, prefix=settings.api_prefix)
 app.include_router(inbox.router, prefix=settings.api_prefix)
+app.include_router(suggest.router, prefix=settings.api_prefix)
 
 
 @app.get("/health")

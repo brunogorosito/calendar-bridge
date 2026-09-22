@@ -12,7 +12,7 @@ SCOPES = [
     "openid",
     "email",
     "profile",
-    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/gmail.readonly",
 ]
 
@@ -166,6 +166,111 @@ class GoogleProvider(CalendarProvider):
                     continue
                 emails.append(self._parse_message(detail.json()))
             return emails
+
+    @staticmethod
+    def _iso(dt: datetime) -> str:
+        return dt.isoformat() + "Z"
+
+    async def create_event(
+        self,
+        access_token: str,
+        *,
+        summary: str,
+        start: datetime,
+        end: datetime,
+        description: str = "",
+        location: str = "",
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent:
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        body = {
+            "summary": summary,
+            "description": description,
+            "location": location,
+            "start": {"dateTime": self._iso(start), "timeZone": "UTC"},
+            "end": {"dateTime": self._iso(end), "timeZone": "UTC"},
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{CALENDAR_URL}/calendars/{calendar_id}/events", json=body, headers=headers
+            )
+            if resp.status_code not in (200, 201):
+                raise ProviderError(self.name, f"create_event failed: {resp.text}")
+            item = resp.json()
+        return self._from_item(item)
+
+    async def update_event(
+        self,
+        access_token: str,
+        provider_event_id: str,
+        *,
+        summary: str | None = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        description: str | None = None,
+        location: str | None = None,
+        calendar_id: str = "primary",
+    ) -> NormalizedEvent:
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        body = {}
+        if summary is not None:
+            body["summary"] = summary
+        if description is not None:
+            body["description"] = description
+        if location is not None:
+            body["location"] = location
+        if start is not None:
+            body["start"] = {"dateTime": self._iso(start), "timeZone": "UTC"}
+        if end is not None:
+            body["end"] = {"dateTime": self._iso(end), "timeZone": "UTC"}
+        async with httpx.AsyncClient() as client:
+            resp = await client.patch(
+                f"{CALENDAR_URL}/calendars/{calendar_id}/events/{provider_event_id}",
+                json=body,
+                headers=headers,
+            )
+            if resp.status_code != 200:
+                raise ProviderError(self.name, f"update_event failed: {resp.text}")
+            item = resp.json()
+        return self._from_item(item)
+
+    async def delete_event(
+        self, access_token: str, provider_event_id: str, calendar_id: str = "primary"
+    ) -> None:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        async with httpx.AsyncClient() as client:
+            resp = await client.delete(
+                f"{CALENDAR_URL}/calendars/{calendar_id}/events/{provider_event_id}",
+                headers=headers,
+            )
+            if resp.status_code not in (200, 204):
+                raise ProviderError(self.name, f"delete_event failed: {resp.text}")
+
+    @staticmethod
+    def _from_item(item: dict) -> NormalizedEvent:
+        start_raw = item.get("start", {})
+        end_raw = item.get("end", {})
+        start = GoogleProvider._parse_dt(start_raw) or datetime.utcnow()
+        end = GoogleProvider._parse_dt(end_raw) or start
+        online_url = None
+        conference = item.get("conferenceData", {}).get("entryPoints", [])
+        for ep in conference:
+            if ep.get("entryPointType") in ("video", "hangout"):
+                online_url = ep.get("uri")
+                break
+        return NormalizedEvent(
+            provider_event_id=item["id"],
+            calendar_id=item.get("organizer", {}).get("email", "primary"),
+            summary=item.get("summary", ""),
+            description=item.get("description", ""),
+            location=item.get("location", ""),
+            start=start,
+            end=end,
+            all_day=not start_raw.get("dateTime"),
+            busy=item.get("transparency", "opaque") == "opaque",
+            online_meeting_url=online_url,
+            raw=item,
+        )
 
     @staticmethod
     def _parse_message(msg: dict) -> NormalizedEmail:

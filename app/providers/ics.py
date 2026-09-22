@@ -82,3 +82,12 @@ class IcsProvider(CalendarProvider):
         self, access_token: str, since: datetime, limit: int = 50
     ) -> list[NormalizedEmail]:
         return []  # ICS has no inbox
+
+    async def create_event(self, **kwargs) -> NormalizedEvent:
+        raise ProviderError(self.name, "ICS calendar is read-only")
+
+    async def update_event(self, *args, **kwargs) -> NormalizedEvent:
+        raise ProviderError(self.name, "ICS calendar is read-only")
+
+    async def delete_event(self, *args, **kwargs) -> None:
+        raise ProviderError(self.name, "ICS calendar is read-only")
