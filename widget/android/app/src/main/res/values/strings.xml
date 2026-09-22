@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calendar Bridge</string>
+    <string name="title_activity_main">Calendar Bridge</string>
+    <string name="package_name">io.renaiss.calendarbridge</string>
+    <string name="custom_url_scheme">io.renaiss.calendarbridge</string>
+</resources>

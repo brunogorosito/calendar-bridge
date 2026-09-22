@@ -1,0 +1,48 @@
+import { fmtTime, parseISO, fmtDayShort } from "../lib/utils.js";
+
+export function TodayCard({ day }) {
+  const pct = day.busy_minutes + day.free_minutes
+    ? Math.round((day.busy_minutes / (day.busy_minutes + day.free_minutes)) * 100)
+    : 0;
+
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-semibold capitalize">
+          {parseISO(day.date).toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" })}
+        </div>
+        <div className="text-[11px] text-slate-400">
+          {day.busy_minutes} min ocupado · {day.free_minutes} min libre
+        </div>
+      </div>
+
+      <div className="h-2 rounded-full bg-slate-800 overflow-hidden mb-3">
+        <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      </div>
+
+      {day.blocks.length === 0 ? (
+        <div className="text-xs text-slate-500 py-2">Día libre 🎉</div>
+      ) : (
+        <div className="space-y-1">
+          {day.blocks
+            .filter((b) => b.busy)
+            .map((b, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border ${
+                  b.source === "google"
+                    ? "border-blue-500/30 bg-blue-500/10 text-blue-200"
+                    : "border-purple-500/30 bg-purple-500/10 text-purple-200"
+                }`}
+              >
+                <span className="font-mono">{fmtTime(b.start)}–{fmtTime(b.end)}</span>
+                <span className="opacity-70 truncate">
+                  {b.source === "google" ? "Google" : b.source === "microsoft_ics" ? "Aunesa" : b.source}
+                </span>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,8 @@
+{
+  "appId": "io.renaiss.calendarbridge",
+  "appName": "Calendar Bridge",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
