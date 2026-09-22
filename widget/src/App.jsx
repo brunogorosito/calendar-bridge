@@ -131,26 +131,32 @@ export default function App() {
       {showAccounts && (
         <Modal title="Vincular cuentas" onClose={() => setShowAccounts(false)}>
           <p className="text-xs text-slate-400 mb-3">
-            Abrí el flujo de OAuth en el navegador del sistema. Al autorizar, volvé al widget y tocá
-            "Listo".
+            Abrí el flujo de OAuth en el navegador del sistema. Podés agregar varias cuentas por
+            proveedor. Al autorizar, volvé al widget y tocá "Listo".
           </p>
           {["google", "microsoft"].map((p) => {
-            const linked = accounts.find((a) => a.provider === p);
+            const linked = accounts.filter((a) => a.provider === p);
             return (
-              <a
-                key={p}
-                href={api.login(p)}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition mb-2"
-              >
-                <span className="text-sm capitalize font-medium">
-                  {p === "google" ? "Google" : "Microsoft"}
-                </span>
-                <span className={`text-[11px] px-2 py-0.5 rounded-full ${linked ? "bg-green-500/20 text-green-300" : "bg-slate-700 text-slate-400"}`}>
-                  {linked ? linked.provider_email : "no vinculado"}
-                </span>
-              </a>
+              <div key={p} className="mb-3">
+                <a
+                  href={api.login(p)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition mb-1.5"
+                >
+                  <span className="text-sm capitalize font-medium">
+                    {p === "google" ? "Google" : "Microsoft"}
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                    {linked.length ? `${linked.length} vinculada${linked.length > 1 ? "s" : ""}` : "agregar +"}
+                  </span>
+                </a>
+                {linked.map((a) => (
+                  <div key={a.id} className="text-[11px] text-slate-400 px-1 py-0.5 truncate">
+                    {a.provider_email}
+                  </div>
+                ))}
+              </div>
             );
           })}
           <button
@@ -158,7 +164,7 @@ export default function App() {
               await load(true);
               setShowAccounts(false);
             }}
-            className="w-full mt-2 px-3 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-medium transition"
+            className="w-full mt-1 px-3 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition"
           >
             Listo
           </button>

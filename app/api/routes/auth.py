@@ -89,6 +89,16 @@ async def list_accounts(db: AsyncSession = Depends(get_db)):
     return [AccountOut.model_validate(acc) for acc in result.scalars().all()]
 
 
+@router.delete("/accounts/{account_id}")
+async def delete_account(account_id: int, db: AsyncSession = Depends(get_db)):
+    account = await db.get(ProviderAccount, account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+    await db.delete(account)
+    await db.commit()
+    return {"deleted": account_id}
+
+
 @router.post("/sync/ics")
 async def sync_ics(db: AsyncSession = Depends(get_db)):
     """Pull events from the published Outlook ICS calendar (no OAuth needed)."""

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { ExternalLink, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { providerColor, providerLabel } from "../lib/utils.js";
 
@@ -22,6 +22,7 @@ export function AccountsView() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -36,20 +37,30 @@ export function AccountsView() {
     load();
   }, []);
 
-  const linked = (p) => accounts.find((a) => a.provider === p);
-
   function doLogin(p) {
     setRedirecting(p);
     window.open(`/api/v1/auth/${p}/login`, "_self");
   }
 
+  async function remove(id) {
+    setDeleting(id);
+    try {
+      await fetch(`/api/v1/auth/accounts/${id}`, { method: "DELETE" });
+      await load();
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  const byProvider = (p) => accounts.filter((a) => a.provider === p);
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
         <h2 className="font-semibold text-lg mb-1 text-slate-100">Cuentas vinculadas</h2>
         <p className="text-sm text-slate-500">
-          Conectá tus cuentas de Google y Microsoft. Al vincular se abren los permisos de lectura de
-          calendario y email.
+          Podés conectar varias cuentas de Google o Microsoft. Se sincronizan todas y se mezclan en
+          una sola vista de disponibilidad e inbox.
         </p>
       </div>
 
@@ -59,13 +70,13 @@ export function AccountsView() {
           <div className="skeleton h-40" />
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {PROVIDERS.map((p) => {
-            const acc = linked(p.id);
+            const linked = byProvider(p.id);
             const c = providerColor(p.id);
             return (
-              <div key={p.id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-5 flex flex-col">
-                <div className="flex items-start justify-between mb-4">
+              <div key={p.id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-slate-200">
                       {p.icon}
@@ -75,43 +86,47 @@ export function AccountsView() {
                       <div className="text-xs text-slate-500">{p.desc}</div>
                     </div>
                   </div>
-                  {acc && (
-                    <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-medium ${c.bg} ${c.border} ${c.text}`}>
-                      <ShieldCheck size={11} /> Conectado
+                  {linked.length > 0 && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${c.bg} ${c.border} ${c.text}`}>
+                      {linked.length} cuenta{linked.length > 1 ? "s" : ""}
                     </span>
                   )}
                 </div>
 
-                {acc ? (
-                  <>
-                    <div className="text-sm text-slate-300 truncate mb-1">{acc.provider_email}</div>
-                    <div className="text-[11px] text-slate-600 mb-4">
-                      {acc.scopes.length} permisos · {providerLabel(p.id)}
-                    </div>
-                    <button
-                      onClick={() => doLogin(p.id)}
-                      disabled={redirecting === p.id}
-                      className="mt-auto flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium transition disabled:opacity-50"
+                <div className="space-y-2 mb-4">
+                  {linked.length === 0 && (
+                    <div className="text-xs text-slate-600 py-1">Sin cuentas vinculadas</div>
+                  )}
+                  {linked.map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
                     >
-                      {redirecting === p.id ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-                      Reconectar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-600 mb-4">
-                      <ShieldOff size={13} /> No vinculada
+                      <ShieldCheck size={14} className={`shrink-0 ${c.text}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm text-slate-300 truncate">{acc.provider_email}</div>
+                        <div className="text-[11px] text-slate-600">{acc.scopes.length} permisos</div>
+                      </div>
+                      <button
+                        onClick={() => remove(acc.id)}
+                        disabled={deleting === acc.id}
+                        title="Desvincular"
+                        className="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-red-400 transition disabled:opacity-50"
+                      >
+                        {deleting === acc.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => doLogin(p.id)}
-                      disabled={redirecting === p.id}
-                      className="mt-auto flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-60"
-                    >
-                      {redirecting === p.id ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={15} />}
-                      Vincular {p.name}
-                    </button>
-                  </>
-                )}
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => doLogin(p.id)}
+                  disabled={redirecting === p.id}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-60"
+                >
+                  {redirecting === p.id ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                  Agregar cuenta {p.name}
+                </button>
               </div>
             );
           })}

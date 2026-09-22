@@ -33,9 +33,11 @@ async def get_valid_token(db: AsyncSession, account: ProviderAccount) -> str:
 async def save_tokens(
     db: AsyncSession, user_id: int, provider: str, bundle: TokenBundle
 ) -> ProviderAccount:
+    # Match by provider + email so multiple accounts per provider are supported.
     result = await db.execute(
         select(ProviderAccount).where(
-            ProviderAccount.user_id == user_id, ProviderAccount.provider == provider
+            ProviderAccount.provider == provider,
+            ProviderAccount.provider_email == bundle.email,
         )
     )
     account = result.scalar_one_or_none()
