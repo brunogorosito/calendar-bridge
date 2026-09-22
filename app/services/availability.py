@@ -53,11 +53,20 @@ async def get_day_view(
         )
     blocks.sort(key=lambda b: b.start)
 
-    busy_minutes = sum(int((b.end - b.start).total_seconds() // 60) for b in blocks if b.busy)
-
     ws = _parse_time(user.work_start, day)
     we = _parse_time(user.work_end, day)
     total = max(0, int((we - ws).total_seconds() // 60))
+
+    # solo contar minutos ocupados dentro de la jornada laboral
+    busy_minutes = 0
+    for b in blocks:
+        if not b.busy:
+            continue
+        s = max(b.start, ws)
+        e = min(b.end, we)
+        if s < e:
+            busy_minutes += int((e - s).total_seconds() // 60)
+
     free_minutes = max(0, total - busy_minutes)
 
     return DayView(
