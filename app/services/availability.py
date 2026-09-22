@@ -45,6 +45,10 @@ async def get_day_view(
                 end=e,
                 busy=ev.busy,
                 source=ev.provider,
+                summary=ev.summary,
+                description=clean_description(ev.description),
+                location=ev.location,
+                online_meeting_url=ev.online_meeting_url,
             )
         )
     blocks.sort(key=lambda b: b.start)
@@ -89,6 +93,50 @@ async def get_month_view(db: AsyncSession, user: User, month_start: datetime) ->
 def _parse_time(value: str, day: datetime) -> datetime:
     h, m = (int(x) for x in value.split(":"))
     return day.replace(hour=h, minute=m, second=0, microsecond=0)
+
+
+TEAMS_NOISE = (
+    "reunión de microsoft teams",
+    "microsoft teams meeting",
+    "unirse:",
+    "join:",
+    "unirse",
+    "join",
+    "¿necesita ayuda?",
+    "need help?",
+    "privacy and security",
+    "privacidad y seguridad",
+    "learn more",
+    "más información",
+    "company logo",
+    "logo",
+    "___",
+    "____",
+    "___ _",
+    "…",
+)
+
+
+def clean_description(desc: str) -> str:
+    """Remove Microsoft Teams / Exchange boilerplate from event descriptions."""
+    if not desc:
+        return ""
+    lines = []
+    for raw in desc.splitlines():
+        line = raw.strip()
+        low = line.lower()
+        if not line:
+            continue
+        if low.startswith(TEAMS_NOISE):
+            continue
+        if line.startswith("http"):
+            continue
+        lines.append(line)
+    text = "\n".join(lines).strip()
+    # collapse duplicate separators
+    while "___" in text:
+        text = text.replace("___", "—")
+    return text[:800]
 
 
 def week_start(day: datetime) -> datetime:

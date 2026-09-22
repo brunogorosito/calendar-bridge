@@ -11,6 +11,7 @@ export function WeekStrip({ week }) {
           const load = d.busy_minutes + d.free_minutes
             ? Math.min(1, d.busy_minutes / (d.busy_minutes + d.free_minutes))
             : 0;
+          const firstBusy = d.blocks.find((b) => b.busy);
           return (
             <div
               key={d.date}
@@ -28,6 +29,11 @@ export function WeekStrip({ week }) {
                   style={{ width: `${Math.max(load * 100, busy ? 20 : 0)}%` }}
                 />
               </div>
+              {firstBusy && (
+                <span className="text-[9px] leading-tight text-slate-400 line-clamp-2 text-center px-1">
+                  {firstBusy.summary}
+                </span>
+              )}
             </div>
           );
         })}

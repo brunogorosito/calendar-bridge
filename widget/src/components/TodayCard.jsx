@@ -1,4 +1,4 @@
-import { fmtTime, parseISO, fmtDayShort } from "../lib/utils.js";
+import { fmtTime, parseISO } from "../lib/utils.js";
 
 export function TodayCard({ day }) {
   const pct = day.busy_minutes + day.free_minutes
@@ -23,25 +23,35 @@ export function TodayCard({ day }) {
       {day.blocks.length === 0 ? (
         <div className="text-xs text-slate-500 py-2">Día libre 🎉</div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           {day.blocks
             .filter((b) => b.busy)
             .map((b, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-2 text-xs rounded-lg px-2.5 py-1.5 border ${
-                  b.source === "google"
-                    ? "border-blue-500/30 bg-blue-500/10 text-blue-200"
-                    : "border-purple-500/30 bg-purple-500/10 text-purple-200"
-                }`}
-              >
-                <span className="font-mono">{fmtTime(b.start)}–{fmtTime(b.end)}</span>
-                <span className="opacity-70 truncate">
-                  {b.source === "google" ? "Google" : b.source === "microsoft_ics" ? "Aunesa" : b.source}
-                </span>
-              </div>
+              <Block key={i} b={b} />
             ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+export function Block({ b }) {
+  return (
+    <div
+      className={`text-xs rounded-lg px-2.5 py-2 border ${
+        b.source === "google"
+          ? "border-blue-500/30 bg-blue-500/10 text-blue-200"
+          : "border-purple-500/30 bg-purple-500/10 text-purple-200"
+      }`}
+    >
+      <div className="flex items-center gap-2 mb-0.5">
+        <span className="font-mono font-medium">{fmtTime(b.start)}–{fmtTime(b.end)}</span>
+        {b.summary && <span className="font-semibold truncate">{b.summary}</span>}
+      </div>
+      {b.description && (
+        <p className="text-[11px] leading-snug opacity-80 whitespace-pre-line line-clamp-3">
+          {b.description}
+        </p>
       )}
     </div>
   );
