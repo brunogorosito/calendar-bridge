@@ -12,7 +12,7 @@ from ...config import get_settings
 from ...database import get_db
 from ...models import ProviderAccount, User
 from ...providers import get_provider
-from ...schemas import AccountOut
+from ...schemas import AccountOut, GoogleClientOut
 from ...services.tokens import save_tokens
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -29,11 +29,21 @@ async def _find_or_create_user(db: AsyncSession, email: str) -> User:
 
 
 @router.get("/{provider}/login")
-async def login(provider: str, request: Request):
+async def login(
+    provider: str,
+    request: Request,
+    client: str = Query(None, description="Google OAuth client name (default|sancor)"),
+):
     state = secrets.token_urlsafe(32)
     request.session["oauth_state"] = state
     request.session["oauth_provider"] = provider
-    provider_client = get_provider(provider)
+    if provider == "google":
+        request.session["oauth_google_client"] = client or "default"
+        from ...providers import get_google_client
+
+        provider_client = get_google_client(client or "default")
+    else:
+        provider_client = get_provider(provider)
     return RedirectResponse(provider_client.auth_url(state))
 
 
@@ -53,7 +63,13 @@ async def callback(
     if state != request.session.get("oauth_state"):
         raise HTTPException(status_code=400, detail="State mismatch")
 
-    provider_client = get_provider(provider)
+    if provider == "google":
+        from ...providers import get_google_client
+
+        client_name = request.session.get("oauth_google_client") or "default"
+        provider_client = get_google_client(client_name)
+    else:
+        provider_client = get_provider(provider)
     bundle = await provider_client.exchange_code(code)
 
     # email may be in token claims; if absent, we need a minimal placeholder.
@@ -72,7 +88,8 @@ async def callback(
             db, bundle.email or f"{provider}-{secrets.token_hex(4)}@local"
         )
         await db.flush()
-        account = await save_tokens(db, user.id, provider, bundle)
+        client_name = request.session.get("oauth_google_client") if provider == "google" else None
+        account = await save_tokens(db, user.id, provider, bundle, client_name=client_name)
         user = await db.get(User, account.user_id)
 
     request.session.pop("oauth_state", None)
@@ -87,6 +104,13 @@ async def callback(
 async def list_accounts(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProviderAccount))
     return [AccountOut.model_validate(acc) for acc in result.scalars().all()]
+
+
+@router.get("/google/clients", response_model=list[GoogleClientOut])
+async def google_clients():
+    from ...providers import get_google_client_names
+
+    return get_google_client_names()
 
 
 @router.delete("/accounts/{account_id}")

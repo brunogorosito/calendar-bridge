@@ -18,7 +18,12 @@ async def get_valid_token(db: AsyncSession, account: ProviderAccount) -> str:
     if account.token_expires_at and account.token_expires_at > _utcnow():
         return account.access_token
 
-    provider = get_provider(account.provider)
+    from ..providers import get_google_client, get_provider
+
+    if account.provider == "google":
+        provider = get_google_client(account.client_name or "default")
+    else:
+        provider = get_provider(account.provider)
     bundle: TokenBundle = await provider.refresh(account.refresh_token)
     account.access_token = bundle.access_token
     account.refresh_token = bundle.refresh_token or account.refresh_token
@@ -31,7 +36,7 @@ async def get_valid_token(db: AsyncSession, account: ProviderAccount) -> str:
 
 
 async def save_tokens(
-    db: AsyncSession, user_id: int, provider: str, bundle: TokenBundle
+    db: AsyncSession, user_id: int, provider: str, bundle: TokenBundle, *, client_name: str | None = None
 ) -> ProviderAccount:
     # Match by provider + email so multiple accounts per provider are supported.
     result = await db.execute(
@@ -44,6 +49,8 @@ async def save_tokens(
     if account is None:
         account = ProviderAccount(user_id=user_id, provider=provider)
         db.add(account)
+    if provider == "google":
+        account.client_name = client_name or account.client_name or "default"
     account.provider_email = bundle.email
     account.access_token = bundle.access_token
     account.refresh_token = bundle.refresh_token or account.refresh_token

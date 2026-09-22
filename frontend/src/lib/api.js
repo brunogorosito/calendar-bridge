@@ -12,7 +12,9 @@ async function req(path, opts = {}) {
 
 export const api = {
   accounts: () => req("/auth/accounts"),
-  login: (provider) => req(`/auth/${provider}/login`),
+  googleClients: () => req("/auth/google/clients"),
+  login: (provider, client) => req(`/auth/${provider}/login${client ? `?client=${client}` : ""}`),
+  removeAccount: (id) => req(`/auth/accounts/${id}`, { method: "DELETE" }),
   refresh: () => req("/auth/refresh", { method: "POST" }),
   syncIcs: () => req("/auth/sync/ics", { method: "POST" }),
   events: (start, end, provider) =>

@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,10 +15,14 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://bridge:bridge@localhost:5432/bridge"
 
-    # Google OAuth
+    # Google OAuth (default client)
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+
+    # Extra Google OAuth clients for other Google Workspace orgs.
+    # JSON array: [{"name": "sancor", "client_id": "...", "client_secret": "..."}]
+    google_extra_clients: str = "[]"
 
     # Microsoft OAuth
     ms_client_id: str = ""
@@ -39,6 +44,24 @@ class Settings(BaseSettings):
     default_lunch_start: str = "13:00"
     default_lunch_end: str = "14:00"
     default_timezone: str = "America/Argentina/Buenos_Aires"
+
+    def google_clients(self) -> list[dict]:
+        """All Google OAuth clients: default + extras."""
+        clients = [
+            {
+                "name": "default",
+                "client_id": self.google_client_id,
+                "client_secret": self.google_client_secret,
+            }
+        ]
+        try:
+            extras = json.loads(self.google_extra_clients or "[]")
+            for c in extras:
+                if c.get("client_id"):
+                    clients.append(c)
+        except (ValueError, TypeError):
+            pass
+        return clients
 
 
 @lru_cache

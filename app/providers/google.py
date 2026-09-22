@@ -25,10 +25,11 @@ GMAIL_URL = "https://gmail.googleapis.com/gmail/v1"
 class GoogleProvider(CalendarProvider):
     name = "google"
 
-    def __init__(self):
+    def __init__(self, client_id: str = "", client_secret: str = "", name: str = "default"):
         s = get_settings()
-        self.client_id = s.google_client_id
-        self.client_secret = s.google_client_secret
+        self.client_name = name
+        self.client_id = client_id or s.google_client_id
+        self.client_secret = client_secret or s.google_client_secret
         self.redirect_uri = s.google_redirect_uri
 
     def auth_url(self, state: str) -> str:

@@ -16,6 +16,30 @@ def get_provider(name: str) -> CalendarProvider:
     return cls()
 
 
+def get_google_client(name: str) -> GoogleProvider:
+    """Build a GoogleProvider for a specific OAuth client by name."""
+    from ..config import get_settings
+
+    for c in get_settings().google_clients():
+        if c.get("name") == name and c.get("client_id"):
+            return GoogleProvider(
+                client_id=c["client_id"],
+                client_secret=c.get("client_secret", ""),
+                name=name,
+            )
+    return GoogleProvider()
+
+
+def get_google_client_names() -> list[dict]:
+    """Return available Google OAuth client names for the login UI."""
+    from ..config import get_settings
+
+    return [
+        {"name": c.get("name", "default"), "has_credentials": bool(c.get("client_id"))}
+        for c in get_settings().google_clients()
+    ]
+
+
 __all__ = [
     "CalendarProvider",
     "NormalizedEvent",
@@ -25,4 +49,6 @@ __all__ = [
     "GoogleProvider",
     "MicrosoftProvider",
     "get_provider",
+    "get_google_client",
+    "get_google_client_names",
 ]

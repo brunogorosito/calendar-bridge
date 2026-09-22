@@ -18,8 +18,14 @@ const PROVIDERS = [
   },
 ];
 
+const CLIENT_LABELS = {
+  default: "renaiss.io",
+  sancor: "Sancor Salud",
+};
+
 export function AccountsView() {
   const [accounts, setAccounts] = useState([]);
+  const [googleClients, setGoogleClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(null);
   const [deleting, setDeleting] = useState(null);
@@ -27,7 +33,9 @@ export function AccountsView() {
   async function load() {
     setLoading(true);
     try {
-      setAccounts(await api.accounts());
+      const [accs, clients] = await Promise.allSettled([api.accounts(), api.googleClients()]);
+      if (accs.status === "fulfilled") setAccounts(accs.value);
+      if (clients.status === "fulfilled") setGoogleClients(clients.value);
     } finally {
       setLoading(false);
     }
@@ -37,15 +45,15 @@ export function AccountsView() {
     load();
   }, []);
 
-  function doLogin(p) {
-    setRedirecting(p);
-    window.open(`/api/v1/auth/${p}/login`, "_self");
+  function doLogin(p, client) {
+    setRedirecting(`${p}:${client || ""}`);
+    window.open(`/api/v1/auth/${p}/login${client ? `?client=${client}` : ""}`, "_self");
   }
 
   async function remove(id) {
     setDeleting(id);
     try {
-      await fetch(`/api/v1/auth/accounts/${id}`, { method: "DELETE" });
+      await api.removeAccount(id);
       await load();
     } finally {
       setDeleting(null);
@@ -105,7 +113,11 @@ export function AccountsView() {
                       <ShieldCheck size={14} className={`shrink-0 ${c.text}`} />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm text-slate-300 truncate">{acc.provider_email}</div>
-                        <div className="text-[11px] text-slate-600">{acc.scopes.length} permisos</div>
+                        <div className="text-[11px] text-slate-600">
+                          {acc.provider === "google"
+                            ? `${CLIENT_LABELS[acc.client_name] || acc.client_name || "Google"} · ${acc.scopes.length} permisos`
+                            : `${acc.scopes.length} permisos`}
+                        </div>
                       </div>
                       <button
                         onClick={() => remove(acc.id)}
@@ -119,14 +131,34 @@ export function AccountsView() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => doLogin(p.id)}
-                  disabled={redirecting === p.id}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-60"
-                >
-                  {redirecting === p.id ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-                  Agregar cuenta {p.name}
-                </button>
+                {p.id === "google" && googleClients.length > 1 ? (
+                  <div className="space-y-1.5">
+                    {googleClients
+                      .filter((cl) => cl.has_credentials)
+                      .map((cl) => (
+                        <button
+                          key={cl.name}
+                          onClick={() => doLogin(p.id, cl.name)}
+                          disabled={redirecting === `${p.id}:${cl.name}`}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-60"
+                        >
+                          <span className="flex items-center gap-2">
+                            {redirecting === `${p.id}:${cl.name}` ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                            Agregar {CLIENT_LABELS[cl.name] || cl.name}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => doLogin(p.id)}
+                    disabled={redirecting === `${p.id}:`}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium transition disabled:opacity-60"
+                  >
+                    {redirecting === `${p.id}:` ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                    Agregar cuenta {p.name}
+                  </button>
+                )}
               </div>
             );
           })}

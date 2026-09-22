@@ -29,7 +29,8 @@ export const api = {
     return res.json();
   },
   accounts: () => req("/auth/accounts"),
-  login: (provider) => `${getApiBase()}/api/v1/auth/${provider}/login`,
+  googleClients: () => req("/auth/google/clients"),
+  login: (provider, client) => `${getApiBase()}/api/v1/auth/${provider}/login${client ? `?client=${client}` : ""}`,
   refresh: () => req("/auth/refresh", { method: "POST" }),
   syncIcs: () => req("/auth/sync/ics", { method: "POST" }),
   day: (date, tz = "America/Argentina/Buenos_Aires", ws = "09:00", we = "18:00") =>

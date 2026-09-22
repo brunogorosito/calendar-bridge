@@ -6,10 +6,16 @@ import { TodayCard } from "./components/TodayCard.jsx";
 import { WeekStrip } from "./components/WeekStrip.jsx";
 import { SettingsModal } from "./components/SettingsModal.jsx";
 
+const CLIENT_LABELS = { default: "renaiss.io", sancor: "Sancor Salud" };
+function clientLabel(name) {
+  return CLIENT_LABELS[name] || name || "Google";
+}
+
 export default function App() {
   const [today, setToday] = useState(null);
   const [week, setWeek] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [googleClients, setGoogleClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -21,14 +27,16 @@ export default function App() {
     setError(null);
     try {
       const date = todayISO();
-      const [t, w, acc] = await Promise.allSettled([
+      const [t, w, acc, gc] = await Promise.allSettled([
         api.day(date),
         api.week(date),
         api.accounts(),
+        api.googleClients(),
       ]);
       if (t.status === "fulfilled") setToday(t.value);
       if (w.status === "fulfilled") setWeek(w.value);
       if (acc.status === "fulfilled") setAccounts(acc.value);
+      if (gc.status === "fulfilled") setGoogleClients(gc.value);
       if (t.status === "rejected") setError(t.reason.message);
     } catch (e) {
       setError(e.message);
@@ -136,24 +144,31 @@ export default function App() {
           </p>
           {["google", "microsoft"].map((p) => {
             const linked = accounts.filter((a) => a.provider === p);
+            const clients = p === "google" ? googleClients.filter((cl) => cl.has_credentials) : [];
+            const links =
+              p === "google" && clients.length > 1
+                ? clients.map((cl) => ({ label: `${p === "google" ? "Google" : "Microsoft"} · ${clientLabel(cl.name)}`, client: cl.name }))
+                : [{ label: p === "google" ? "Google" : "Microsoft", client: null }];
             return (
               <div key={p} className="mb-3">
-                <a
-                  href={api.login(p)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition mb-1.5"
-                >
-                  <span className="text-sm capitalize font-medium">
-                    {p === "google" ? "Google" : "Microsoft"}
-                  </span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                    {linked.length ? `${linked.length} vinculada${linked.length > 1 ? "s" : ""}` : "agregar +"}
-                  </span>
-                </a>
+                {links.map((l) => (
+                  <a
+                    key={l.label}
+                    href={api.login(p, l.client)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition mb-1.5"
+                  >
+                    <span className="text-sm font-medium">{l.label}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                      {linked.length ? `${linked.length} vinculada${linked.length > 1 ? "s" : ""}` : "agregar +"}
+                    </span>
+                  </a>
+                ))}
                 {linked.map((a) => (
                   <div key={a.id} className="text-[11px] text-slate-400 px-1 py-0.5 truncate">
                     {a.provider_email}
+                    {a.provider === "google" && a.client_name && ` · ${clientLabel(a.client_name)}`}
                   </div>
                 ))}
               </div>

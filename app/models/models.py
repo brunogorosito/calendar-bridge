@@ -30,6 +30,7 @@ class ProviderAccount(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     provider: Mapped[str] = mapped_column(String(32))  # google | microsoft
+    client_name: Mapped[str | None] = mapped_column(String(64), nullable=True)  # google oauth client
     provider_email: Mapped[str] = mapped_column(String(320), index=True)
     access_token: Mapped[str] = mapped_column(Text)
     refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -72,9 +72,16 @@ class MonthView(BaseModel):
 
 
 class AccountOut(BaseModel):
+    id: int
     provider: str
     provider_email: str
+    client_name: str | None = None
     scopes: list[str]
     linked: bool = True
 
     model_config = {"from_attributes": True}
+
+
+class GoogleClientOut(BaseModel):
+    name: str
+    has_credentials: bool
