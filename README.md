@@ -193,30 +193,38 @@ DATABASE_URL=postgresql+asyncpg://bridge:bridge@localhost:5434/bridge \
 
 ## Deploy en producción
 
+### Opción A: VM propia (Oracle Cloud Always Free)
+
 ```bash
-# 1. En la máquina: copiar el repo y configurar .env
 git clone https://github.com/brunogorosito/calendar-bridge.git
 cd calendar-bridge
-cp .env.example .env
-
-# 2. Configurar credenciales en .env (Google, Microsoft, SMTP si querés notificaciones)
-#    IMPORTANTE: cambiar GOOGLE_REDIRECT_URI / MS_REDIRECT_URI a la URL real,
-#    ej. http://TU_IP:8000/api/v1/auth/google/callback, y registrarla en la consola.
-
-# 3. Levantar (con restart automático)
+cp .env.example .env   # completar credenciales y redirect URIs a la URL pública
 docker compose up -d --build
-
-# 4. Ver logs
-docker compose logs -f api
 ```
 
-### Recomendaciones de producción
+### Opción B: Render + Neon + cron externo (free, sin tarjeta)
 
-- Configurar `API_KEYS` en `.env` para proteger los endpoints de datos (multi-usuario).
-- Usar un proxy reverso (Caddy/nginx) para HTTPS y exponer solo la API.
-- Los `GOOGLE_REDIRECT_URI` y `MS_REDIRECT_URI` deben apuntar a la URL pública y estar
-  registrados en la consola de Google/Azure.
-- Para notificaciones por email, completar `SMTP_*` y `NOTIFY_EMAILS`.
+1. **Neon** (https://neon.tech) → crear proyecto → copiar la **connection string** de Postgres.
+   Quedará algo como: `postgresql+asyncpg://user:pass@host/db?ssl=require`
+   > IMPORTANTE: usar el scheme `postgresql+asyncpg` y agregar `?ssl=require` al final.
+2. **Render** (https://render.com) → **New → Blueprint** → conectar el repo → usa `render.yaml`.
+3. En el dashboard de Render, completar los **env vars** del servicio `calendar-bridge-api`:
+   - `DATABASE_URL` → la de Neon (paso 1)
+   - `API_KEYS` → un token que generes (protege la API)
+   - `GOOGLE_REDIRECT_URI` y `MS_REDIRECT_URI` → `https://calendar-bridge-api.onrender.com/api/v1/auth/google/callback`
+     y `.../auth/microsoft/callback` (reemplazar el nombre real del servicio)
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_EXTRA_CLIENTS`, `MS_*`, `OUTLOOK_ICS_URL` → las mismas que usás en local
+   - `SMTP_*` + `NOTIFY_EMAILS` → si querés notificaciones por email
+   - `SECRET_KEY` → ya se genera automáticamente
+4. **Registrar las redirect URIs nuevas** en:
+   - Google Console → OAuth clients → agregar `https://.../auth/google/callback`
+   - Azure → App registration → Authentication → agregar `https://.../auth/microsoft/callback`
+5. **Cron externo** (https://cron-job.org, gratis) para reemplazar el worker:
+   - Cada **15 min**: `POST https://calendar-bridge-api.onrender.com/api/v1/auth/sync` con header `X-API-Key: <tu key>`
+   - Cada día a las **8:00**: `POST https://calendar-bridge-api.onrender.com/api/v1/auth/notify/daily` con el mismo header
+6. Re-vincular las cuentas (los tokens son por dominio de redirect, así que hay que autorizar de nuevo).
+
+> Nota: en el plan free de Render el servicio se duerme a los ~15 min sin tráfico y tarda ~30s en despertar. El cron cada 15 min lo mantiene casi siempre activo.
 
 ### Cambiar puertos
 

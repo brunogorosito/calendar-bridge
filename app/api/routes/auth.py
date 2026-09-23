@@ -158,3 +158,26 @@ async def force_refresh(db: AsyncSession = Depends(get_db)):
     for acc in accounts:
         results.append(await sync_user(db, acc.user_id))
     return {"synced": results}
+
+
+@router.post("/sync", dependencies=[Depends(require_api_key)])
+async def run_sync(db: AsyncSession = Depends(get_db)):
+    """Full sync: ICS calendar + all linked accounts. For external cron."""
+    from ...services.sync import sync_ics_calendar, sync_user
+
+    ics = await sync_ics_calendar(db)
+    result = await db.execute(select(ProviderAccount))
+    accounts = result.scalars().all()
+    per_account = []
+    for acc in accounts:
+        per_account.append(await sync_user(db, acc.user_id))
+    return {"ics": ics, "accounts": per_account}
+
+
+@router.post("/notify/daily", dependencies=[Depends(require_api_key)])
+async def notify_daily():
+    """Send the daily email summary. For external cron."""
+    from ...services.notify import send_daily_summary
+
+    sent = await send_daily_summary()
+    return {"sent": sent}

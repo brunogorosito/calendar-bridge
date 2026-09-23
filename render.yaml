@@ -1,0 +1,46 @@
+# Render blueprint (free tier friendly)
+# Deploy: conectar el repo en Render -> New Blueprint -> render.yaml
+services:
+  - type: web
+    name: calendar-bridge-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: API_KEYS
+        sync: false  # set manually
+      - key: DATABASE_URL
+        sync: false  # Neon Postgres URL (postgresql+asyncpg://user:pass@host/db?ssl=require)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false  # https://calendar-bridge-api.onrender.com/api/v1/auth/google/callback
+      - key: GOOGLE_EXTRA_CLIENTS
+        sync: false
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
+      - key: MS_TENANT_ID
+        sync: false
+      - key: MS_REDIRECT_URI
+        sync: false  # https://calendar-bridge-api.onrender.com/api/v1/auth/microsoft/callback
+      - key: OUTLOOK_ICS_URL
+        sync: false
+      - key: SMTP_SERVER
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: NOTIFY_EMAILS
+        sync: false

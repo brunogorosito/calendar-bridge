@@ -5,15 +5,11 @@ pydantic-settings==2.7.0
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 httpx==0.28.1
-google-api-python-client==2.157.0
-google-auth==2.37.0
-google-auth-oauthlib==1.2.1
-msal==1.31.0
 apscheduler==3.11.0
-python-multipart==0.0.20
 itsdangerous==2.2.0
-alembic==1.14.0
 icalendar==5.0.13
 recurring-ical-events==2.2.1
+
+# dev/test only
 pytest==8.3.4
 pytest-asyncio==0.25.0
