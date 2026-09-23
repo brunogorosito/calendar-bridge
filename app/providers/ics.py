@@ -8,7 +8,14 @@ import recurring_ical_events
 from icalendar import Calendar
 
 from ..config import get_settings
-from .base import CalendarProvider, NormalizedEmail, NormalizedEvent, ProviderError, TokenBundle
+from .base import (
+    CalendarInfo,
+    CalendarProvider,
+    NormalizedEmail,
+    NormalizedEvent,
+    ProviderError,
+    TokenBundle,
+)
 
 TZ = ZoneInfo(get_settings().default_timezone)
 
@@ -34,8 +41,11 @@ class IcsProvider(CalendarProvider):
     async def refresh(self, refresh_token: str) -> TokenBundle:
         raise ProviderError(self.name, "ICS provider does not use OAuth")
 
+    async def list_calendars(self, access_token: str) -> list[CalendarInfo]:
+        return [CalendarInfo(calendar_id="outlook", name="Calendario publicado (ICS)")]
+
     async def list_events(
-        self, access_token: str, time_min: datetime, time_max: datetime
+        self, access_token: str, time_min: datetime, time_max: datetime, calendar_id: str = "outlook"
     ) -> list[NormalizedEvent]:
         if not self.url:
             return []

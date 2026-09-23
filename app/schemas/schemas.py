@@ -50,6 +50,7 @@ class TimeBlock(BaseModel):
     online_meeting_url: str | None = None
     account_email: str = ""
     client_name: str | None = None
+    calendar_name: str = ""
     event_id: int | None = None
     user_id: int | None = None
     writable: bool = False

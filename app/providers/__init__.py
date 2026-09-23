@@ -1,4 +1,11 @@
-from .base import CalendarProvider, NormalizedEvent, NormalizedEmail, TokenBundle, ProviderError
+from .base import (
+    CalendarProvider,
+    CalendarInfo,
+    NormalizedEvent,
+    NormalizedEmail,
+    TokenBundle,
+    ProviderError,
+)
 from .google import GoogleProvider
 from .microsoft import MicrosoftProvider
 from .ics import IcsProvider
@@ -42,6 +49,7 @@ def get_google_client_names() -> list[dict]:
 
 __all__ = [
     "CalendarProvider",
+    "CalendarInfo",
     "NormalizedEvent",
     "NormalizedEmail",
     "TokenBundle",

@@ -6,7 +6,14 @@ from urllib.parse import urlencode
 import httpx
 
 from ..config import get_settings
-from .base import CalendarProvider, NormalizedEmail, NormalizedEvent, ProviderError, TokenBundle
+from .base import (
+    CalendarInfo,
+    CalendarProvider,
+    NormalizedEmail,
+    NormalizedEvent,
+    ProviderError,
+    TokenBundle,
+)
 
 SCOPES = [
     "offline_access",
@@ -90,8 +97,25 @@ class MicrosoftProvider(CalendarProvider):
                 raise ProviderError(self.name, f"GET {path} failed: {resp.text}")
             return resp.json()
 
+    async def list_calendars(self, access_token: str) -> list[CalendarInfo]:
+        """List all calendars of the account."""
+        data = await self._graph_get(access_token, "me/calendars", {"$top": 100})
+        calendars = []
+        for item in data.get("value", []):
+            if item.get("canEdit") is False and item.get("canShare") is False:
+                # still include readable calendars
+                pass
+            calendars.append(
+                CalendarInfo(
+                    calendar_id=item["id"],
+                    name=item.get("name", item["id"]),
+                    selected=True,
+                )
+            )
+        return calendars
+
     async def list_events(
-        self, access_token: str, time_min: datetime, time_max: datetime
+        self, access_token: str, time_min: datetime, time_max: datetime, calendar_id: str = "primary"
     ) -> list[NormalizedEvent]:
         params = {
             "startDateTime": time_min.isoformat(),
@@ -99,7 +123,8 @@ class MicrosoftProvider(CalendarProvider):
             "$select": "id,subject,bodyPreview,location,start,end,isAllDay,showAs,onlineMeeting,organizer",
             "$top": 200,
         }
-        data = await self._graph_get(access_token, "me/calendarView", params)
+        path = "me/calendarView" if calendar_id == "primary" else f"me/calendars/{calendar_id}/calendarView"
+        data = await self._graph_get(access_token, path, params)
         events = []
         for item in data.get("value", []):
             online_url = None
@@ -109,7 +134,7 @@ class MicrosoftProvider(CalendarProvider):
             events.append(
                 NormalizedEvent(
                     provider_event_id=item["id"],
-                    calendar_id=item.get("organizer", {}).get("emailAddress", {}).get("address", "primary"),
+                    calendar_id=calendar_id,
                     summary=item.get("subject", ""),
                     description=item.get("bodyPreview", ""),
                     location=item.get("location", {}).get("displayName", ""),

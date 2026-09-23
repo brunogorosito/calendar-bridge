@@ -49,6 +49,7 @@ class CalendarEvent(Base):
     provider: Mapped[str] = mapped_column(String(32), index=True)
     provider_event_id: Mapped[str] = mapped_column(String(512), index=True)
     calendar_id: Mapped[str] = mapped_column(String(512), default="primary")
+    calendar_name: Mapped[str] = mapped_column(String(512), default="")
     summary: Mapped[str] = mapped_column(String(1024), default="")
     description: Mapped[str] = mapped_column(Text, default="")
     location: Mapped[str] = mapped_column(String(1024), default="")

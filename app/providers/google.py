@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import httpx
 
 from ..config import get_settings
-from .base import CalendarProvider, NormalizedEmail, NormalizedEvent, ProviderError, TokenBundle
+from .base import (
+    CalendarInfo,
+    CalendarProvider,
+    NormalizedEmail,
+    NormalizedEvent,
+    ProviderError,
+    TokenBundle,
+)
 
 SCOPES = [
     "openid",
@@ -93,8 +100,33 @@ class GoogleProvider(CalendarProvider):
             }
         )
 
+    async def list_calendars(self, access_token: str) -> list[CalendarInfo]:
+        """List all calendars of the account (calendarList)."""
+        headers = {"Authorization": f"Bearer {access_token}"}
+        params = {"maxResults": 250, "minAccessRole": "reader", "showHidden": "false"}
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{CALENDAR_URL}/users/me/calendarList", params=params, headers=headers
+            )
+            if resp.status_code != 200:
+                raise ProviderError(self.name, f"list_calendars failed: {resp.text}")
+            data = resp.json()
+        calendars = []
+        for item in data.get("items", []):
+            # skip read-only free/busy-only and hidden calendars
+            if item.get("accessRole") == "freeBusyReader":
+                continue
+            calendars.append(
+                CalendarInfo(
+                    calendar_id=item["id"],
+                    name=item.get("summaryOverride") or item.get("summary") or item["id"],
+                    selected=item.get("selected", True) and not item.get("hidden", False),
+                )
+            )
+        return calendars
+
     async def list_events(
-        self, access_token: str, time_min: datetime, time_max: datetime
+        self, access_token: str, time_min: datetime, time_max: datetime, calendar_id: str = "primary"
     ) -> list[NormalizedEvent]:
         params = {
             "timeMin": time_min.isoformat() + "Z",
@@ -104,9 +136,10 @@ class GoogleProvider(CalendarProvider):
             "maxResults": 500,
         }
         headers = {"Authorization": f"Bearer {access_token}"}
+        cal_path = quote(calendar_id, safe="")
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                f"{CALENDAR_URL}/calendars/primary/events", params=params, headers=headers
+                f"{CALENDAR_URL}/calendars/{cal_path}/events", params=params, headers=headers
             )
             if resp.status_code != 200:
                 raise ProviderError(self.name, f"list_events failed: {resp.text}")
@@ -129,7 +162,7 @@ class GoogleProvider(CalendarProvider):
             events.append(
                 NormalizedEvent(
                     provider_event_id=item["id"],
-                    calendar_id=item.get("organizer", {}).get("email", "primary"),
+                    calendar_id=calendar_id,
                     summary=item.get("summary", ""),
                     description=item.get("description", ""),
                     location=item.get("location", ""),
@@ -192,7 +225,7 @@ class GoogleProvider(CalendarProvider):
         }
         async with httpx.AsyncClient() as client:
             resp = await client.post(
-                f"{CALENDAR_URL}/calendars/{calendar_id}/events", json=body, headers=headers
+                f"{CALENDAR_URL}/calendars/{quote(calendar_id, safe="")}/events", json=body, headers=headers
             )
             if resp.status_code not in (200, 201):
                 raise ProviderError(self.name, f"create_event failed: {resp.text}")
@@ -225,7 +258,7 @@ class GoogleProvider(CalendarProvider):
             body["end"] = {"dateTime": self._iso(end), "timeZone": "UTC"}
         async with httpx.AsyncClient() as client:
             resp = await client.patch(
-                f"{CALENDAR_URL}/calendars/{calendar_id}/events/{provider_event_id}",
+                f"{CALENDAR_URL}/calendars/{quote(calendar_id, safe="")}/events/{provider_event_id}",
                 json=body,
                 headers=headers,
             )
@@ -240,7 +273,7 @@ class GoogleProvider(CalendarProvider):
         headers = {"Authorization": f"Bearer {access_token}"}
         async with httpx.AsyncClient() as client:
             resp = await client.delete(
-                f"{CALENDAR_URL}/calendars/{calendar_id}/events/{provider_event_id}",
+                f"{CALENDAR_URL}/calendars/{quote(calendar_id, safe="")}/events/{provider_event_id}",
                 headers=headers,
             )
             if resp.status_code not in (200, 204):

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import get_settings
 from ..models import CalendarEvent, EmailMessage, ProviderAccount
-from ..providers import get_provider
+from ..providers import CalendarInfo, get_provider
 
 
 def _utcnow() -> datetime:
@@ -81,7 +81,13 @@ async def sync_account_calendar(db: AsyncSession, account: ProviderAccount) -> d
     token = await get_valid_token(db, account)
     provider = get_provider(account.provider)
     time_min, time_max = _window()
-    events = await provider.list_events(token, time_min, time_max)
+
+    # fetch all calendars of the account
+    calendars = await provider.list_calendars(token)
+    if not calendars:
+        calendars = [CalendarInfo(calendar_id="primary", name="Principal")]
+
+    name_by_id = {c.calendar_id: c.name for c in calendars}
 
     # replace the window for this account (simple, idempotent approach)
     await db.execute(
@@ -90,26 +96,34 @@ async def sync_account_calendar(db: AsyncSession, account: ProviderAccount) -> d
             CalendarEvent.provider == account.provider,
         )
     )
-    for ev in events:
-        db.add(
-            CalendarEvent(
-                user_id=account.user_id,
-                provider=account.provider,
-                provider_event_id=ev.provider_event_id,
-                calendar_id=ev.calendar_id,
-                summary=ev.summary,
-                description=ev.description,
-                location=ev.location,
-                start=ev.start,
-                end=ev.end,
-                all_day=ev.all_day,
-                busy=ev.busy,
-                online_meeting_url=ev.online_meeting_url,
-                raw=ev.raw,
+
+    total = 0
+    for cal in calendars:
+        if not cal.selected:
+            continue
+        events = await provider.list_events(token, time_min, time_max, cal.calendar_id)
+        for ev in events:
+            db.add(
+                CalendarEvent(
+                    user_id=account.user_id,
+                    provider=account.provider,
+                    provider_event_id=ev.provider_event_id,
+                    calendar_id=ev.calendar_id,
+                    calendar_name=name_by_id.get(ev.calendar_id, ev.calendar_id),
+                    summary=ev.summary,
+                    description=ev.description,
+                    location=ev.location,
+                    start=ev.start,
+                    end=ev.end,
+                    all_day=ev.all_day,
+                    busy=ev.busy,
+                    online_meeting_url=ev.online_meeting_url,
+                    raw=ev.raw,
+                )
             )
-        )
+            total += 1
     await db.commit()
-    return {"provider": account.provider, "events": len(events)}
+    return {"provider": account.provider, "calendars": len([c for c in calendars if c.selected]), "events": total}
 
 
 async def sync_account_emails(db: AsyncSession, account: ProviderAccount) -> dict:

@@ -456,7 +456,10 @@ function EventChip({ b, onClick }) {
     >
       <span className={`font-medium ${c.text} text-xs`}>{fmtTime(b.start)}–{fmtTime(b.end)}</span>
       <span className="text-xs truncate text-slate-200">{b.summary}</span>
-      <span className={`ml-auto shrink-0 text-[10px] ${c.text}`}>{providerLabel(b.source, b.client_name)}</span>
+      <span className={`ml-auto shrink-0 text-[10px] ${c.text}`}>
+        {providerLabel(b.source, b.client_name)}
+        {b.calendar_name ? ` · ${b.calendar_name}` : ""}
+      </span>
       {b.online_meeting_url && <Video size={12} className="shrink-0 text-slate-500" />}
     </button>
   );
@@ -512,6 +515,9 @@ function EventModal({ block, onClose, onDeleted, writable = false }) {
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${c.solid}`} />
             <span className={`text-[11px] font-medium uppercase tracking-wide ${c.text}`}>{providerLabel(block.source, block.client_name)}</span>
+            {block.calendar_name && (
+              <span className="text-[11px] text-slate-500 truncate">· {block.calendar_name}</span>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {writable && block.event_id && (

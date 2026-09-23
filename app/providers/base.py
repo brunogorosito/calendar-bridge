@@ -25,6 +25,7 @@ class NormalizedEvent:
     busy: bool
     online_meeting_url: str | None
     raw: dict
+    calendar_name: str = ""
 
 
 @dataclass
@@ -44,6 +45,13 @@ class NormalizedEmail:
     raw: dict
 
 
+@dataclass
+class CalendarInfo:
+    calendar_id: str
+    name: str
+    selected: bool = True  # whether the user actively uses it
+
+
 class CalendarProvider(ABC):
     """Common interface for Google Calendar / Microsoft Graph calendars."""
 
@@ -59,8 +67,11 @@ class CalendarProvider(ABC):
     async def refresh(self, refresh_token: str) -> TokenBundle: ...
 
     @abstractmethod
+    async def list_calendars(self, access_token: str) -> list[CalendarInfo]: ...
+
+    @abstractmethod
     async def list_events(
-        self, access_token: str, time_min: datetime, time_max: datetime
+        self, access_token: str, time_min: datetime, time_max: datetime, calendar_id: str = "primary"
     ) -> list[NormalizedEvent]: ...
 
     @abstractmethod
